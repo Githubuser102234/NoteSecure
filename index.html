@@ -1,1 +1,1041 @@
-<!DOCTYPE html> <html lang="en"> <head>     <meta charset="UTF-8">     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <title>Advanced Personal Notes</title>     <!-- Tailwind CSS CDN -->     <script src="https://cdn.tailwindcss.com"></script>     <!-- Inter Font -->     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">     <style>         body {             font-family: 'Inter', sans-serif;             @apply bg-gray-50 text-gray-800;         }         /* Custom scrollbar for better aesthetics */         ::-webkit-scrollbar {             width: 8px;         }         ::-webkit-scrollbar-track {             background: #f1f1f1;             border-radius: 10px;         }         ::-webkit-scrollbar-thumb {             background: #888;             border-radius: 10px;         }         ::-webkit-scrollbar-thumb:hover {             background: #555;         }          /* Shimmer loading effect */         .shimmer-bg {             /* Fallback background color, visible even if gradient fails */             background-color: #e0e0e0;             background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%);             background-size: 1000px 100%;             animation: shimmer 1.5s infinite linear;         }         @keyframes shimmer {             0% {                 background-position: -1000px 0;             }             100% {                 background-position: 1000px 0;             }         }         .shimmer-card {             @apply p-4 rounded-xl shadow-md bg-white;         }         .shimmer-line {             height: 16px;             width: 90%;             @apply rounded-md shimmer-bg mb-2;         }         .shimmer-line-short {             height: 16px;             width: 60%;             @apply rounded-md shimmer-bg;         }         .shimmer-title {             height: 24px;             width: 70%;             @apply rounded-md shimmer-bg mb-3;         }         .shimmer-content {             height: 48px;             width: 100%;             @apply rounded-md shimmer-bg mb-4;         }         .shimmer-button {             height: 36px;             width: 80px;             @apply rounded-md shimmer-bg;         }         /* Specific shimmer for viewer title/content */         .shimmer-text-block {             @apply shimmer-bg rounded-md;             height: 1.5em; /* Approximate line height */             margin-bottom: 0.5em;         }         .shimmer-text-block-lg {             height: 2.5em; /* For titles */             width: 70%;         }         .shimmer-text-block-md {             height: 1.5em; /* For content lines */             width: 100%;         }         .shimmer-text-block-sm {             height: 1.2em; /* For timestamps */             width: 40%;         }     </style> </head> <body class="flex flex-col min-h-screen">     <div id="app" class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">          <!-- Message Modal -->         <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">             <div class="bg-white p-6 rounded-xl shadow-lg w-11/12 max-w-sm">                 <h3 id="modalTitle" class="font-bold text-lg mb-2 text-gray-900"></h3>                 <p id="modalMessage" class="text-gray-700 text-sm mb-4"></p>                 <div class="flex justify-end space-x-2">                     <button id="modalConfirm" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hidden">Confirm</button>                     <button id="modalClose" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">Close</button>                 </div>             </div>         </div>          <!-- Auth Section -->         <div id="authSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200 mt-10 hidden">             <h2 id="authHeading" class="text-3xl font-bold text-center mb-6 text-gray-900">Sign In</h2>              <!-- Sign In Form -->             <form id="signInForm" class="space-y-4">                 <div>                     <label for="signInEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>                     <input type="email" id="signInEmail" placeholder="your@email.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                 </div>                 <div>                     <label for="signInPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>                     <input type="password" id="signInPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                 </div>                 <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>             </form>              <!-- Sign Up Form -->             <form id="signUpForm" class="space-y-4 hidden">                 <div>                     <label for="signUpEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>                     <input type="email" id="signUpEmail" placeholder="your@email.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                 </div>                 <div>                     <label for="signUpPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>                     <input type="password" id="signUpPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                 </div>                 <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">Sign Up</button>             </form>              <div class="mt-6 text-center">                 <button id="toggleAuthMode" class="text-blue-600 hover:underline text-sm">                     Don't have an account? Sign Up                 </button>             </div>              <div class="relative flex items-center justify-center my-6">                 <div class="absolute inset-0 flex items-center">                     <div class="w-full border-t border-gray-300"></div>                 </div>                 <div class="relative bg-white px-4 text-sm text-gray-500">                     OR                 </div>             </div>              <!-- Google Sign In Button -->             <button type="button" id="googleSignInBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-red-700 transition">                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">                     <path d="M7 11v2.4h3.97c-.16 1.02-.67 1.87-1.44 2.45v3.16h4.15c2.45-2.26 3.87-5.54 3.87-9.3A9.998 9.998 0 0012 3C6.48 3 2 7.48 2 13s4.48 10 10 10c4.78 0 8.87-3.08 9.9-7.38l-4.25-3.32c-.93 2.82-3.6 4.7-6.09 4.7-3.23 0-5.87-2.6-5.87-5.8S8.77 7.2 12 7.2c1.76 0 3.32.6 4.56 1.76L19 6.2C17.27 4.59 14.77 3 12 3 6.48 3 2 7.48 2 13s4.48 10 10 10z"/>                 </svg>                 <span>Sign in with Google</span>             </button>         </div>          <!-- Main Notes List Section -->         <div id="notesSection" class="hidden">             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Your Notes</h1>                 <div class="flex items-center space-x-4">                     <span id="userIdDisplay" class="text-sm text-gray-600 font-medium"></span>                     <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>                 </div>             </header>              <!-- Add Note Form -->             <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">                 <h3 class="text-2xl font-semibold mb-4 text-gray-900">Add New Note</h3>                 <form id="addNoteForm" class="space-y-4">                     <div>                         <label for="noteTitle" class="block text-sm font-medium text-gray-700 mb-1">Title</label>                         <input type="text" id="noteTitle" placeholder="My awesome note title" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                     </div>                     <div>                         <label for="noteContent" class="block text-sm font-medium text-gray-700 mb-1">Content</label>                         <textarea id="noteContent" rows="4" placeholder="Write your thoughts here..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>                     </div>                     <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Add Note</button>                 </form>             </div>              <!-- Notes List -->             <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                 <!-- Shimmer loading placeholders -->                 <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">                     <div class="shimmer-title"></div>                     <div class="shimmer-content"></div>                     <div class="flex justify-end space-x-2 mt-4">                         <div class="shimmer-button"></div>                         <div class="shimmer-button"></div>                     </div>                 </div>             </div>         </div>          <!-- Single Note Viewer Section -->         <div id="singleNoteViewerSection" class="hidden">             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Note Details</h1>                 <div class="flex items-center space-x-4">                     <button type="button" id="goHomeBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">Go Home</button>                     <button type="button" id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">Show in Editor Mode</button>                     <button type="button" id="togglePublicStatusViewerBtn"                             class="px-3 py-2 rounded-lg transition font-medium text-sm flex items-center justify-center text-white                                    bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"                             title="Note is Private (Click to make public)">                         🔗                     </button>                     <button type="button" id="signOutBtnViewer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>                 </div>             </header>              <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px]">                 <!-- Viewer Mode -->                 <div id="viewerMode" class="">                     <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>                     <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>                     <p id="viewerNoteTimestamp" class="text-gray-500 text-sm mt-6"></p>                 </div>                  <!-- Editor Mode -->                 <div id="editorMode" class="hidden space-y-4">                     <form id="editNoteFormViewer" class="space-y-4">                         <input type="hidden" id="editNoteIdViewer">                         <div>                             <label for="editNoteTitleViewer" class="block text-sm font-medium text-gray-700 mb-1">Title</label>                             <input type="text" id="editNoteTitleViewer" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>                         </div>                         <div>                             <label for="editNoteContentViewer" class="block text-sm font-medium text-gray-700 mb-1">Content</label>                             <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>                         </div>                         <div class="flex justify-end space-x-3 mt-4">                             <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>                         </div>                     </form>                 </div>             </div>         </div>      </div>      <!-- Firebase SDKs -->     <script type="module">         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";         import {             getAuth,             signInWithEmailAndPassword,             createUserWithEmailAndPassword,             onAuthStateChanged,             signOut,             GoogleAuthProvider,             signInWithPopup         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";         import {             getFirestore,             collection,             addDoc,             serverTimestamp,             query,             onSnapshot,             doc,             getDoc,             updateDoc,             deleteDoc,             setDoc // Added setDoc for public_notes_metadata         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";          // Firebase Configuration (provided by user for GitHub Pages)         const firebaseConfig = {             apiKey: "AIzaSyDs3PMoc6m-8jUFYn_sjDKXdSacAmrVjJE",             authDomain: "notestorage-e4a87.firebaseapp.com",             projectId: "notestorage-e4a87",             storageBucket: "notestorage-e4a87.firebaseastorage.app",             messagingSenderId: "674683993472",             appId: "1:674683993472:web:d4ea28a5a77dfba459d565",             measurementId: "G-WW2ZS4XNB7"         };          // Static App ID for Firestore path (derived from projectId)         const appId = firebaseConfig.projectId;          // Initialize Firebase         const app = initializeApp(firebaseConfig);         const auth = getAuth(app);         const db = getFirestore(app);         let currentUserId = null;         let unsubscribeNotes = null; // To store the onSnapshot unsubscribe function          // --- DOM Elements ---         const authSection = document.getElementById('authSection');         const notesSection = document.getElementById('notesSection');         const authHeading = document.getElementById('authHeading');         const signInForm = document.getElementById('signInForm');         const signUpForm = document.getElementById('signUpForm');         const toggleAuthMode = document.getElementById('toggleAuthMode');         const googleSignInBtn = document.getElementById('googleSignInBtn');         const signOutBtn = document.getElementById('signOutBtn'); // For main list         const userIdDisplay = document.getElementById('userIdDisplay');          // Buttons with loading states         const signInBtn = document.getElementById('signInBtn');         const signUpBtn = document.getElementById('signUpBtn');         const addNoteBtn = document.getElementById('addNoteBtn');          const noteTitleInput = document.getElementById('noteTitle');         const noteContentInput = document.getElementById('noteContent');         const notesList = document.getElementById('notesList');         const shimmerTemplate = document.getElementById('shimmerTemplate');          const messageModal = document.getElementById('messageModal');         const modalTitle = document.getElementById('modalTitle');         const modalMessage = document.getElementById('modalMessage');         const modalConfirm = document.getElementById('modalConfirm');         const modalClose = document.getElementById('modalClose');          // Single Note Viewer Elements         const singleNoteViewerSection = document.getElementById('singleNoteViewerSection');         const goHomeBtn = document.getElementById('goHomeBtn');         const toggleViewEditModeBtn = document.getElementById('toggleViewEditModeBtn');         const signOutBtnViewer = document.getElementById('signOutBtnViewer'); // For viewer page         const togglePublicStatusViewerBtn = document.getElementById('togglePublicStatusViewerBtn'); // New Public/Private button for viewer          const viewerMode = document.getElementById('viewerMode');         const editorMode = document.getElementById('editorMode');         const viewerNoteTitle = document.getElementById('viewerNoteTitle');         const viewerNoteContent = document.getElementById('viewerNoteContent');         const viewerNoteTimestamp = document.getElementById('viewerNoteTimestamp');          const editNoteFormViewer = document.getElementById('editNoteFormViewer');         const editNoteIdViewer = document.getElementById('editNoteIdViewer');         const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');         const editNoteContentViewer = document.getElementById('editNoteContentViewer');         const saveChangesBtn = document.getElementById('saveChangesBtn');           let isSignInMode = true; // State for auth form         let isViewerMode = true; // State for single note page          // --- Utility Functions ---          /**          * Displays a custom message modal.          * @param {string} title - The title of the modal.          * @param {string} message - The message content.          * @param {boolean} isConfirm - If true, shows a confirm button.          * @returns {Promise<boolean>} Resolves to true if confirmed, false if cancelled/closed.          */         function showMessageModal(title, message, isConfirm = false) {             return new Promise((resolve) => {                 modalTitle.textContent = title;                 modalMessage.textContent = message;                 messageModal.classList.remove('hidden');                  if (isConfirm) {                     modalConfirm.classList.remove('hidden');                     modalConfirm.onclick = () => {                         messageModal.classList.add('hidden');                         modalConfirm.classList.add('hidden');                         resolve(true);                     };                 } else {                     modalConfirm.classList.add('hidden');                 }                  modalClose.onclick = () => {                     messageModal.classList.add('hidden');                     modalConfirm.classList.add('hidden');                     resolve(false);                 };             });         }          /**          * Displays shimmer loading effects for the notes list.          * @param {boolean} show - True to show, false to hide.          * @param {number} count - Number of shimmer items to display.          */         function toggleNotesListShimmer(show, count = 3) {             notesList.innerHTML = ''; // Clear existing notes/shimmers             if (show) {                 for (let i = 0; i < count; i++) {                     const shimmerClone = shimmerTemplate.cloneNode(true);                     shimmerClone.removeAttribute('id'); // Remove id from clones                     shimmerClone.classList.remove('hidden');                     notesList.appendChild(shimmerClone);                 }             } else {                 notesList.innerHTML = ''; // Clear shimmers             }         }          /**          * Displays shimmer loading effects for the single note viewer.          * @param {boolean} show - True to show, false to hide.          */         function toggleSingleNoteShimmer(show) {             if (show) {                 // Clear existing content and show shimmer                 viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';                 viewerNoteContent.innerHTML = `                     <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>                     <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>                     <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>                 `;                 viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';                  // Apply shimmer directly to input fields when in editor mode                 editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');                 editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');                  // Ensure the containers themselves are visible                 viewerNoteTitle.classList.remove('hidden');                 viewerNoteContent.classList.remove('hidden');                 viewerNoteTimestamp.classList.remove('hidden');              } else {                 // Clear shimmer from viewer and editor fields                 viewerNoteTitle.innerHTML = '';                 viewerNoteContent.innerHTML = '';                 viewerNoteTimestamp.innerHTML = '';                  editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');                 editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');             }         }           /**          * Sets the loading state for a button.          * @param {HTMLButtonElement} button - The button element.          * @param {boolean} isLoading - True to set loading state, false to reset.          * @param {string} originalText - The original text of the button.          */         function setButtonLoading(button, isLoading, originalText) {             if (isLoading) {                 button.dataset.originalText = originalText; // Store original text                 button.disabled = true;                 button.textContent = 'Loading...';                 button.classList.add('opacity-75', 'cursor-not-allowed');             } else {                 button.disabled = false;                 button.textContent = button.dataset.originalText || originalText; // Restore original text                 button.classList.remove('opacity-75', 'cursor-not-allowed');             }         }          /**          * Applies exponential backoff for retrying API calls.          * @param {Function} apiCall - The API function to call.          * @param {Array} args - Arguments to pass to the API function.          * @param {number} retries - Number of retries.          * @param {number} delay - Initial delay in ms.          * @returns {Promise<any>} The result of the API call.          */         async function withExponentialBackoff(apiCall, args = [], retries = 5, delay = 1000) {             for (let i = 0; i < retries; i++) {                 try {                     return await apiCall(...args);                 } catch (error) {                     if (i < retries - 1) {                         await new Promise(res => setTimeout(res, delay));                         delay *= 2; // Exponential increase                     } else {                         throw error; // Re-throw if all retries fail                     }                 }             }         }          /**          * Copies text to the clipboard using document.execCommand for better iframe compatibility.          * @param {string} text - The text to copy.          */         function copyToClipboard(text) {             const textarea = document.createElement('textarea');             textarea.value = text;             textarea.style.position = 'fixed'; // Avoid scrolling to bottom             textarea.style.opacity = 0;             document.body.appendChild(textarea);             textarea.focus();             textarea.select();             try {                 document.execCommand('copy');             } catch (err) {                 console.error('Failed to copy text: ', err);             }             document.body.removeChild(textarea);         }          // --- Routing Logic ---          /**          * Renders the appropriate section based on the URL.          */         async function renderPage() {             const params = new URLSearchParams(window.location.search);             const noteId = params.get('noteid');              // Hide all main sections first             authSection.classList.add('hidden');             notesSection.classList.add('hidden');             singleNoteViewerSection.classList.add('hidden');              if (noteId) {                 // If a noteId is present, try to load the single note viewer                 singleNoteViewerSection.classList.remove('hidden');                 await loadSingleNote(noteId);             } else if (!currentUserId) {                 // Not authenticated and no noteId, show auth section                 authSection.classList.remove('hidden');                 // Ensure note list listener is unsubscribed when logged out                 if (unsubscribeNotes) {                     unsubscribeNotes();                     unsubscribeNotes = null;                 }             } else {                 // Authenticated and no noteId, show main notes list                 notesSection.classList.remove('hidden');                 loadNotesList();             }         }          // Listen for browser history changes (back/forward buttons)         window.addEventListener('popstate', renderPage);          /**          * Navigates to a new URL without a full page reload.          * @param {string} path - The path to navigate to (e.g., '/', '?noteid=abc').          */         function navigate(path) {             // Determine the base URL for GitHub Pages (e.g., /RepoName/)             let baseUrl = window.location.origin;             const pathname = window.location.pathname.split('?')[0]; // Get pathname without query string             const lastSlashIndex = pathname.lastIndexOf('/');              // If pathname ends with a file (e.g., /repo/index.html), go up one level             if (lastSlashIndex > -1 && pathname.substring(lastSlashIndex + 1).includes('.')) {                 baseUrl += pathname.substring(0, lastSlashIndex + 1);             } else {                 baseUrl += pathname;                 if (!baseUrl.endsWith('/')) {                     baseUrl += '/';                 }             }              // Ensure the path starts with '?' if it's a query string, or is just '/' for home.             const targetPath = path.startsWith('?') || path === '/' ? path : '/' + path; // Ensure correct path format              window.history.pushState({}, '', baseUrl + targetPath);             renderPage();         }           // --- Auth Event Listeners ---         toggleAuthMode.addEventListener('click', () => {             isSignInMode = !isSignInMode;             if (isSignInMode) {                 authHeading.textContent = 'Sign In';                 signInForm.classList.remove('hidden');                 signUpForm.classList.add('hidden');                 toggleAuthMode.textContent = "Don't have an account? Sign Up";             } else {                 authHeading.textContent = 'Sign Up';                 signInForm.classList.add('hidden');                 signUpForm.classList.remove('hidden');                 toggleAuthMode.textContent = "Already have an account? Sign In";             }         });          signInForm.addEventListener('submit', async (e) => {             e.preventDefault();             setButtonLoading(signInBtn, true, 'Sign In');             const email = e.target.signInEmail.value;             const password = e.target.signInPassword.value;             try {                 await withExponentialBackoff(signInWithEmailAndPassword, [auth, email, password]);             } catch (error) {                 showMessageModal('Sign In Failed', error.message);             } finally {                 setButtonLoading(signInBtn, false, 'Sign In');             }         });          signUpForm.addEventListener('submit', async (e) => {             e.preventDefault();             setButtonLoading(signUpBtn, true, 'Sign Up');             const email = e.target.signUpEmail.value;             const password = e.target.signUpPassword.value;             try {                 await withExponentialBackoff(createUserWithEmailAndPassword, [auth, email, password]);             } catch (error) {                 showMessageModal('Sign Up Failed', error.message);             } finally {                 setButtonLoading(signUpBtn, false, 'Sign Up');             }         });          googleSignInBtn.addEventListener('click', async () => {             setButtonLoading(googleSignInBtn, true, 'Sign in with Google');             const provider = new GoogleAuthProvider();             try {                 await withExponentialBackoff(signInWithPopup, [auth, provider]);             } catch (error) {                 if (error.code !== 'auth/popup-closed-by-user') {                     showMessageModal('Google Sign In Failed', error.message);                 }             } finally {                 setButtonLoading(googleSignInBtn, false, 'Sign in with Google');             }         });          signOutBtn.addEventListener('click', async () => {             const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);             if (confirmed) {                 try {                     await withExponentialBackoff(signOut, [auth]);                 } catch (error) {                     showMessageModal('Sign Out Failed', error.message);                 }             }         });          signOutBtnViewer.addEventListener('click', async () => {             const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);             if (confirmed) {                 try {                     await withExponentialBackoff(signOut, [auth]);                 } catch (error) {                     showMessageModal('Sign Out Failed', error.message);                 }             }         });          // --- Note Management Functions (Main List) ---          /**          * Updates the appearance of the public toggle button based on note status.          * @param {HTMLElement} buttonElement - The button element to update.          * @param {boolean} isPublic - Current public status of the note.          */         function updatePublicToggleButtonUI(buttonElement, isPublic) {             if (isPublic) {                 buttonElement.classList.remove('bg-red-600', 'hover:bg-red-700');                 buttonElement.classList.add('bg-green-600', 'hover:bg-green-700');                 buttonElement.title = 'Note is Public (Click to copy link)';             } else {                 buttonElement.classList.remove('bg-green-600', 'hover:bg-green-700');                 buttonElement.classList.add('bg-red-600', 'hover:bg-red-700');                 buttonElement.title = 'Note is Private (Click to make public)';             }         }          /**          * Toggles the public status of a note.          * @param {string} noteId - The ID of the note.          * @param {boolean} currentPublicStatus - The current public status of the note.          */         async function togglePublicStatus(noteId, currentPublicStatus) {             const confirmMessage = currentPublicStatus                 ? 'Are you sure you want to make this note private? Others will no longer be able to view it.'                 : 'Are you sure you want to make this note public? Others will not be able to edit it, but view it. This can always be undone.';              const confirmed = await showMessageModal('Confirm Action', confirmMessage, true);             if (!confirmed) return;              try {                 // Update the original note's `isPublic` status                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);                 await withExponentialBackoff(updateDoc, [noteDocRef, { isPublic: !currentPublicStatus }]);                  // Manage public_notes_metadata                 const publicMetadataRef = doc(db, `artifacts/${appId}/public_notes_metadata`, noteId);                 if (!currentPublicStatus) { // Making it public                     await withExponentialBackoff(setDoc, [publicMetadataRef, { ownerId: currentUserId }]);                     const publicLink = window.location.origin + window.location.pathname + `?noteid=${noteId}`;                     copyToClipboard(publicLink);                     showMessageModal('Success', 'Note is now public! The shareable link has been copied to your clipboard.');                 } else { // Making it private                     await withExponentialBackoff(deleteDoc, [publicMetadataRef]);                     showMessageModal('Success', 'Note is now private.');                 }                  // UI update for single note viewer, if applicable                 if (!singleNoteViewerSection.classList.contains('hidden') && editNoteIdViewer.value === noteId) {                     const publicToggleButton = document.getElementById('togglePublicStatusViewerBtn');                     if (publicToggleButton) {                         updatePublicToggleButtonUI(publicToggleButton, !currentPublicStatus);                         publicToggleButton.dataset.isPublic = !currentPublicStatus; // Update dataset                     }                 }                 // For main notes list, onSnapshot will handle UI refresh.              } catch (error) {                 showMessageModal('Error', 'Failed to change note visibility: ' + error.message);                 console.error("Error toggling public status: ", error);             }         }           /**          * Renders a single note card for the main list.          * @param {Object} note - The note object from Firestore.          * @returns {HTMLElement} The created note card element.          */         function createNoteCard(note) {             const noteCard = document.createElement('div');             const isNotePublic = note.isPublic === true; // Ensure boolean             noteCard.id = `note-${note.id}`;             noteCard.className = 'bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between transform transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer';             noteCard.innerHTML = `                 <div>                     <h4 class="text-xl font-semibold mb-2 text-gray-900">${note.title}</h4>                     <p class="text-gray-700 text-sm mb-4">${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</p>                     <p class="text-gray-500 text-xs mt-2">Created: ${note.createdAt?.toDate ? new Date(note.createdAt.toDate()).toLocaleString() : 'N/A'}</p>                 </div>                 <div class="flex justify-end space-x-2 mt-4">                     <button data-id="${note.id}" data-is-public="${isNotePublic}"                             class="toggle-public-btn px-3 py-2 rounded-lg transition font-medium text-sm flex items-center justify-center text-white                                    ${isNotePublic ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}"                             title="${isNotePublic ? 'Note is Public (Click to copy link)' : 'Note is Private (Click to make public)'}"                             onclick="event.stopPropagation()">                         🔗                     </button>                     <button data-id="${note.id}"                             class="edit-note-btn px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-medium text-sm" onclick="event.stopPropagation()">Edit</button>                     <button data-id="${note.id}"                             class="delete-note-btn px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium text-sm" onclick="event.stopPropagation()">Delete</button>                 </div>             `;              // Click listener for the card to navigate to the viewer             noteCard.addEventListener('click', () => {                 navigate(`?noteid=${note.id}`);             });              // Edit button handler (stops propagation to prevent card click)             noteCard.querySelector('.edit-note-btn').addEventListener('click', (e) => {                 navigate(`?noteid=${e.target.dataset.id}`);                 setTimeout(() => {                     // Check if the viewer section is actually visible before trying to switch mode                     if (!singleNoteViewerSection.classList.contains('hidden')) {                         setViewerMode(false); // Switch to editor mode                     }                 }, 100); // Small delay to ensure note is loaded before switching mode             });              // Delete button handler (stops propagation to prevent card click)             noteCard.querySelector('.delete-note-btn').addEventListener('click', async (e) => {                 const id = e.target.dataset.id;                 const confirmed = await showMessageModal('Confirm Delete', 'Are you sure you want to delete this note?', true);                 if (confirmed) {                     try {                         const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, id);                         await withExponentialBackoff(deleteDoc, [noteDocRef]);                         // Also delete from public metadata if it exists                         const publicMetadataRef = doc(db, `artifacts/${appId}/public_notes_metadata`, id);                         await withExponentialBackoff(deleteDoc, [publicMetadataRef]).catch(err => {                             // Ignore if public metadata doesn't exist                             if (err.code !== 'not-found') console.warn("Could not delete public metadata for note:", id, err.message);                         });                         showMessageModal('Success', 'Note deleted successfully!');                     } catch (error) {                         showMessageModal('Error', 'Failed to delete note: ' + error.message);                     }                 }             });              // Public/Private button handler             noteCard.querySelector('.toggle-public-btn').addEventListener('click', async (e) => {                 const id = e.target.dataset.id;                 const isPublic = e.target.dataset.isPublic === 'true'; // Convert string to boolean                 await togglePublicStatus(id, isPublic);             });               return noteCard;         }          // --- Note Form Event Listeners (Main List) ---         addNoteForm.addEventListener('submit', async (e) => {             e.preventDefault();             setButtonLoading(addNoteBtn, true, 'Add Note');             const title = noteTitleInput.value.trim();             const content = noteContentInput.value.trim();              if (!title) {                 showMessageModal('Input Error', 'Note title cannot be empty.');                 setButtonLoading(addNoteBtn, false, 'Add Note');                 return;             }              try {                 const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);                 await withExponentialBackoff(addDoc, [notesCollectionRef, {                     title,                     content,                     isPublic: false, // Default to private                     createdAt: serverTimestamp()                 }]);                 noteTitleInput.value = '';                 noteContentInput.value = '';                 showMessageModal('Success', 'Note added successfully!');             } catch (error) {                 showMessageModal('Error', 'Failed to add note: ' + error.message);             } finally {                 setButtonLoading(addNoteBtn, false, 'Add Note');             }         });          // --- Single Note Viewer Functions ---          /**          * Loads and displays a single note in the viewer section, handling public/private access.          * @param {string} noteId - The ID of the note to load.          */         async function loadSingleNote(noteId) {             // Unsubscribe from main notes list if currently active             if (unsubscribeNotes) {                 unsubscribeNotes();                 unsubscribeNotes = null;             }              setViewerMode(true); // Default to viewer mode initially             toggleSingleNoteShimmer(true); // Show shimmer for single note content              let noteData = null;             let noteOwnerId = null;             let isNotePublic = false;              // Elements for controlling visibility/interactivity             const publicToggleButton = document.getElementById('togglePublicStatusViewerBtn');             const editModeToggleButton = document.getElementById('toggleViewEditModeBtn');             const saveButton = document.getElementById('saveChangesBtn');             const editTitleField = document.getElementById('editNoteTitleViewer');             const editContentField = document.getElementById('editNoteContentViewer');               // Hide all action buttons and disable edit fields by default             publicToggleButton.classList.add('hidden');             publicToggleButton.disabled = true;             editModeToggleButton.classList.add('hidden');             saveButton.classList.add('hidden');             editTitleField.disabled = true;             editContentField.disabled = true;             goHomeBtn.classList.remove('hidden'); // Always visible              try {                 // Step 1: Check public_notes_metadata to see if the note is public and get its owner.                 const publicMetadataRef = doc(db, `artifacts/${appId}/public_notes_metadata`, noteId);                 const publicMetadataSnap = await withExponentialBackoff(getDoc, [publicMetadataRef]);                  if (publicMetadataSnap.exists()) {                     isNotePublic = true;                     noteOwnerId = publicMetadataSnap.data().ownerId;                 }                  // Step 2: Fetch the actual note document.                 let targetNoteDocRef;                 if (isNotePublic && noteOwnerId) {                     // If public, use the ownerId from metadata                     targetNoteDocRef = doc(db, `artifacts/${appId}/users/${noteOwnerId}/notes`, noteId);                 } else if (currentUserId) {                     // If not public, or if current user is logged in, try to fetch from current user's notes                     targetNoteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);                 } else {                     // Not public, and not logged in - cannot view.                     toggleSingleNoteShimmer(false);                     showMessageModal('Access Denied', 'This note is private or does not exist. Please sign in to view your notes, or ensure you have a valid link to a public note.');                     navigate('/');                     return;                 }                  const noteSnap = await withExponentialBackoff(getDoc, [targetNoteDocRef]);                  toggleSingleNoteShimmer(false); // Hide shimmer once data is fetched                  if (noteSnap.exists()) {                     noteData = { id: noteSnap.id, ...noteSnap.data() };                     // Ensure noteData.isPublic is correct based on how it was fetched or actual status                     if (noteSnap.data().isPublic !== undefined) {                         noteData.isPublic = noteSnap.data().isPublic;                     } else {                         noteData.isPublic = false; // Default to private if field is missing                     }                      // If we fetched a public note, and currentUserId was null, noteOwnerId would have been set by metadata.                     // If currentUserId is present and we're looking at our own note, noteOwnerId might still be null (if not public metadata)                     // We need to confirm the true owner of the note to determine edit/manage permissions                     if (!noteOwnerId && currentUserId) {                         // If noteOwnerId wasn't set by public metadata, and we are logged in, assume current user is owner.                         noteOwnerId = currentUserId;                     }                      viewerNoteTitle.textContent = noteData.title;                     viewerNoteContent.textContent = noteData.content;                     viewerNoteTimestamp.textContent = `Created: ${noteData.createdAt?.toDate ? new Date(noteData.createdAt.toDate()).toLocaleString() : 'N/A'}`;                      // Populate editor fields                     editNoteIdViewer.value = noteData.id;                     editNoteTitleViewer.value = noteData.title;                     editNoteContentViewer.value = noteData.content;                      const isCurrentUsersNote = (currentUserId === noteOwnerId);                      // --- Update UI for owner vs. viewer ---                     updatePublicToggleButtonUI(publicToggleButton, noteData.isPublic);                     publicToggleButton.dataset.noteId = noteData.id;                     publicToggleButton.dataset.isPublic = noteData.isPublic;                      if (isCurrentUsersNote) {                         // Current user is the owner, enable controls                         publicToggleButton.classList.remove('hidden');                         publicToggleButton.disabled = false;                         editModeToggleButton.classList.remove('hidden'); // Allow switching to editor mode                          // Make edit fields editable                         editTitleField.disabled = false;                         editContentField.disabled = false;                          // Ensure save button state is correct if in editor mode                         if (!isViewerMode) {                             saveButton.classList.remove('hidden');                         } else {                             saveButton.classList.add('hidden'); // Hide save button in viewer mode                         }                      } else {                         // Not the owner, hide/disable editing and visibility controls                         publicToggleButton.classList.add('hidden');                         publicToggleButton.disabled = true;                         editModeToggleButton.classList.add('hidden');                         saveButton.classList.add('hidden');                         editTitleField.disabled = true;                         editContentField.disabled = true;                         setViewerMode(true); // Force viewer mode if not owner                     }                   } else {                     // Note not found with any accessible path                     showMessageModal('Error', 'Note not found or you do not have permission to view it.');                     navigate('/'); // Go back to home if note doesn't exist or no access                 }             } catch (error) {                 toggleSingleNoteShimmer(false); // Hide shimmer on error                 console.error("Error loading single note: ", error);                 showMessageModal('Error', 'Failed to load note: ' + error.message);                 navigate('/'); // Go back to home on error             }         }          /**          * Toggles between viewer and editor mode for a single note.          * Only allows editor mode if the current user is the owner.          * @param {boolean} isView - True for viewer mode, false for editor mode.          */         function setViewerMode(isView) {             isViewerMode = isView;              // Check if the current user is the owner. If the edit fields are disabled, they are not the owner.             const isOwner = !editNoteTitleViewer.disabled;              if (isViewerMode || !isOwner) { // If going to viewer mode, OR if not owner, force viewer mode.                 viewerMode.classList.remove('hidden');                 editorMode.classList.add('hidden');                 toggleViewEditModeBtn.textContent = 'Show in Editor Mode';                 saveChangesBtn.classList.add('hidden'); // Hide save button in viewer mode             } else { // Only allow editor mode if owner AND explicitly requested                 viewerMode.classList.add('hidden');                 editorMode.classList.remove('hidden');                 toggleViewEditModeBtn.textContent = 'Show in Viewer Mode';                 saveChangesBtn.classList.remove('hidden'); // Show save button in editor mode for owner             }         }          // --- Single Note Viewer Event Listeners ---         goHomeBtn.addEventListener('click', () => {             navigate('/');         });          toggleViewEditModeBtn.addEventListener('click', () => {             setViewerMode(!isViewerMode);         });          togglePublicStatusViewerBtn.addEventListener('click', async () => {             const noteId = togglePublicStatusViewerBtn.dataset.noteId;             const currentPublicStatus = togglePublicStatusViewerBtn.dataset.isPublic === 'true'; // Convert string to boolean             await togglePublicStatus(noteId, currentPublicStatus);             // After toggling, reload the single note to ensure all states are refreshed.             await loadSingleNote(noteId);         });          editNoteFormViewer.addEventListener('submit', async (e) => {             e.preventDefault();             setButtonLoading(saveChangesBtn, true, 'Save Changes');             const id = editNoteIdViewer.value;             const title = editNoteTitleViewer.value.trim();             const content = editNoteContentViewer.value.trim();              if (!title) {                 showMessageModal('Input Error', 'Note title cannot be empty.');                 setButtonLoading(saveChangesBtn, false, 'Save Changes');                 return;             }              try {                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, id);                 await withExponentialBackoff(updateDoc, [noteDocRef, {                     title,                     content                 }]);                 showMessageModal('Success', 'Note updated successfully!');                 setViewerMode(true); // Switch back to viewer mode after saving                 await loadSingleNote(id); // Reload the note to reflect changes             } catch (error) {                 showMessageModal('Error', 'Failed to update note: ' + error.message);             } finally {                 setButtonLoading(saveChangesBtn, false, 'Save Changes');             }         });           // --- Authentication State Observer ---         onAuthStateChanged(auth, async (user) => {             currentUserId = user ? user.uid : null;              if (user) {                 userIdDisplay.textContent = `User ID: ${user.uid}`;                 renderPage(); // Render appropriate page after auth state is known             } else {                 // User logged out                 currentUserId = null;                 if (unsubscribeNotes) {                     unsubscribeNotes(); // Unsubscribe from notes listener                     unsubscribeNotes = null;                 }                 navigate('/'); // Go to home (which will show auth section or public note)                 // renderPage will be called by navigate             }         });          /**          * Sets up the real-time listener for the main notes list.          */         function loadNotesList() {             if (!currentUserId || !db) {                 console.error("Cannot load notes list: User not authenticated or Firestore not initialized.");                 return;             }              toggleNotesListShimmer(true); // Show shimmer while loading notes              // If there's an existing listener, unsubscribe it first             if (unsubscribeNotes) {                 unsubscribeNotes();             }              const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);             const q = query(notesCollectionRef); // orderBy commented out to avoid index issues              unsubscribeNotes = onSnapshot(q, (snapshot) => {                 toggleNotesListShimmer(false); // Hide shimmer once data is received                 notesList.innerHTML = ''; // Clear notes before re-rendering                 if (snapshot.empty) {                     notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes yet. Add your first note!</p>';                 } else {                     const notesData = [];                     snapshot.forEach(doc => {                         notesData.push({ id: doc.id, ...doc.data() });                     });                     // Sort notes in memory by createdAt descending                     notesData.sort((a, b) => {                         const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;                         const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;                         return timeB - timeA;                     });                     notesData.forEach(note => {                         notesList.appendChild(createNoteCard(note));                     });                 }             }, (error) => {                 console.error("Error fetching notes: ", error);                 showMessageModal('Error', 'Failed to load notes: ' + error.message);                 toggleNotesListShimmer(false); // Hide shimmer on error             });         }           // Initial page render on window load         window.onload = () => {             shimmerTemplate.classList.add('hidden'); // Hide the template after initial load             // onAuthStateChanged will trigger renderPage after auth state is determined         };      </script> </body> </html> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Personal Notes</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            @apply bg-gray-50 text-gray-800;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Shimmer loading effect */
+        .shimmer-bg {
+            /* Fallback background color, visible even if gradient fails */
+            background-color: #e0e0e0;
+            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.5s infinite linear;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+        .shimmer-card {
+            @apply p-4 rounded-xl shadow-md bg-white;
+        }
+        .shimmer-line {
+            height: 16px;
+            width: 90%;
+            @apply rounded-md shimmer-bg mb-2;
+        }
+        .shimmer-line-short {
+            height: 16px;
+            width: 60%;
+            @apply rounded-md shimmer-bg;
+        }
+        .shimmer-title {
+            height: 24px;
+            width: 70%;
+            @apply rounded-md shimmer-bg mb-3;
+        }
+        .shimmer-content {
+            height: 48px;
+            width: 100%;
+            @apply rounded-md shimmer-bg mb-4;
+        }
+        .shimmer-button {
+            height: 36px;
+            width: 80px;
+            @apply rounded-md shimmer-bg;
+        }
+        /* Specific shimmer for viewer title/content */
+        .shimmer-text-block {
+            @apply shimmer-bg rounded-md;
+            height: 1.5em; /* Approximate line height */
+            margin-bottom: 0.5em;
+        }
+        .shimmer-text-block-lg {
+            height: 2.5em; /* For titles */
+            width: 70%;
+        }
+        .shimmer-text-block-md {
+            height: 1.5em; /* For content lines */
+            width: 100%;
+        }
+        .shimmer-text-block-sm {
+            height: 1.2em; /* For timestamps */
+            width: 40%;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <div id="app" class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Message Modal -->
+        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-xl shadow-lg w-11/12 max-w-sm">
+                <h3 id="modalTitle" class="font-bold text-lg mb-2 text-gray-900"></h3>
+                <p id="modalMessage" class="text-gray-700 text-sm mb-4"></p>
+                <div class="flex justify-end space-x-2">
+                    <button id="modalConfirm" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hidden">Confirm</button>
+                    <button id="modalClose" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Section -->
+        <div id="authSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200 mt-10 hidden">
+            <h2 id="authHeading" class="text-3xl font-bold text-center mb-6 text-gray-900">Sign In</h2>
+
+            <!-- Sign In Form -->
+            <form id="signInForm" class="space-y-4">
+                <div>
+                    <label for="signInEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signInEmail" placeholder="your@email.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                </div>
+                <div>
+                    <label for="signInPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signInPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                </div>
+                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signUpForm" class="space-y-4 hidden">
+                <div>
+                    <label for="signUpEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signUpEmail" placeholder="your@email.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                </div>
+                <div>
+                    <label for="signUpPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signUpPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                </div>
+                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">Sign Up</button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <button id="toggleAuthMode" class="text-blue-600 hover:underline text-sm">
+                    Don't have an account? Sign Up
+                </button>
+            </div>
+
+            <div class="relative flex items-center justify-center my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative bg-white px-4 text-sm text-gray-500">
+                    OR
+                </div>
+            </div>
+
+            <!-- Google Sign In Button -->
+            <button type="button" id="googleSignInBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-red-700 transition">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 11v2.4h3.97c-.16 1.02-.67 1.87-1.44 2.45v3.16h4.15c2.45-2.26 3.87-5.54 3.87-9.3A9.998 9.998 0 0012 3C6.48 3 2 7.48 2 13s4.48 10 10 10c4.78 0 8.87-3.08 9.9-7.38l-4.25-3.32c-.93 2.82-3.6 4.7-6.09 4.7-3.23 0-5.87-2.6-5.87-5.8S8.77 7.2 12 7.2c1.76 0 3.32.6 4.56 1.76L19 6.2C17.27 4.59 14.77 3 12 3 6.48 3 2 7.48 2 13s4.48 10 10 10z"/>
+                </svg>
+                <span>Sign in with Google</span>
+            </button>
+        </div>
+
+        <!-- Main Notes List Section -->
+        <div id="notesSection" class="hidden">
+            <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Your Notes</h1>
+                <div class="flex items-center space-x-4">
+                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium"></span>
+                    <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
+                </div>
+            </header>
+
+            <!-- Add Note Form -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                <h3 class="text-2xl font-semibold mb-4 text-gray-900">Add New Note</h3>
+                <form id="addNoteForm" class="space-y-4">
+                    <div>
+                        <label for="noteTitle" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="noteTitle" placeholder="My awesome note title" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                    </div>
+                    <div>
+                        <label for="noteContent" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                        <textarea id="noteContent" rows="4" placeholder="Write your thoughts here..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
+                    </div>
+                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Add Note</button>
+                </form>
+            </div>
+
+            <!-- Notes List -->
+            <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Shimmer loading placeholders -->
+                <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
+                    <div class="shimmer-title"></div>
+                    <div class="shimmer-content"></div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <div class="shimmer-button"></div>
+                        <div class="shimmer-button"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Single Note Viewer Section -->
+        <div id="singleNoteViewerSection" class="hidden">
+            <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Note Details</h1>
+                <div class="flex items-center space-x-4">
+                    <button type="button" id="goHomeBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">Go Home</button>
+                    <button type="button" id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold hidden">Show in Editor Mode</button>
+                    <button type="button" id="signOutBtnViewer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
+                </div>
+            </header>
+
+            <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px]">
+                <!-- Viewer Mode -->
+                <div id="viewerMode" class="">
+                    <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>
+                    <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>
+                    <p id="viewerNoteTimestamp" class="text-gray-500 text-sm mt-6"></p>
+                </div>
+
+                <!-- Editor Mode -->
+                <div id="editorMode" class="hidden space-y-4">
+                    <form id="editNoteFormViewer" class="space-y-4">
+                        <input type="hidden" id="editNoteIdViewer">
+                        <div>
+                            <label for="editNoteTitleViewer" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" id="editNoteTitleViewer" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                        </div>
+                        <div>
+                            <label for="editNoteContentViewer" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                            <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-4">
+                            <button type="button" data-id="" id="togglePublicBtnViewer"
+                                    class="px-6 py-3 text-white rounded-lg transition font-semibold hidden">🔗</button>
+                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold hidden">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut,
+            GoogleAuthProvider,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            query,
+            onSnapshot,
+            doc,
+            getDoc,
+            updateDoc,
+            deleteDoc,
+            setDoc // Added for public notes
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration (provided by user for GitHub Pages)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDs3PMoc6m-8jUFYn_sjDKXdSacAmrVjJE",
+            authDomain: "notestorage-e4a87.firebaseapp.com",
+            projectId: "notestorage-e4a87",
+            storageBucket: "notestorage-e4a87.firebasestorage.app",
+            messagingSenderId: "674683993472",
+            appId: "1:674683993472:web:d4ea28a5a77dfba459d565",
+            measurementId: "G-WW2ZS4XNB7"
+        };
+
+        // Static App ID for Firestore path (derived from projectId)
+        const appId = firebaseConfig.projectId;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUserId = null;
+        let unsubscribeNotes = null; // To store the onSnapshot unsubscribe function
+
+        // --- DOM Elements ---
+        const authSection = document.getElementById('authSection');
+        const notesSection = document.getElementById('notesSection');
+        const authHeading = document.getElementById('authHeading');
+        const signInForm = document.getElementById('signInForm');
+        const signUpForm = document.getElementById('signUpForm');
+        const toggleAuthMode = document.getElementById('toggleAuthMode');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        const signOutBtn = document.getElementById('signOutBtn'); // For main list
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // Buttons with loading states
+        const signInBtn = document.getElementById('signInBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+
+        const noteTitleInput = document.getElementById('noteTitle');
+        const noteContentInput = document.getElementById('noteContent');
+        const notesList = document.getElementById('notesList');
+        const shimmerTemplate = document.getElementById('shimmerTemplate');
+
+        const messageModal = document.getElementById('messageModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirm = document.getElementById('modalConfirm');
+        const modalClose = document.getElementById('modalClose');
+
+        // Single Note Viewer Elements
+        const singleNoteViewerSection = document.getElementById('singleNoteViewerSection');
+        const goHomeBtn = document.getElementById('goHomeBtn');
+        const toggleViewEditModeBtn = document.getElementById('toggleViewEditModeBtn');
+        const signOutBtnViewer = document.getElementById('signOutBtnViewer'); // For viewer page
+
+        const viewerMode = document.getElementById('viewerMode');
+        const editorMode = document.getElementById('editorMode');
+        const viewerNoteTitle = document.getElementById('viewerNoteTitle');
+        const viewerNoteContent = document.getElementById('viewerNoteContent');
+        const viewerNoteTimestamp = document.getElementById('viewerNoteTimestamp');
+
+        const editNoteFormViewer = document.getElementById('editNoteFormViewer');
+        const editNoteIdViewer = document.getElementById('editNoteIdViewer');
+        const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');
+        const editNoteContentViewer = document.getElementById('editNoteContentViewer');
+        const saveChangesBtn = document.getElementById('saveChangesBtn');
+        const togglePublicBtnViewer = document.getElementById('togglePublicBtnViewer');
+
+
+        let isSignInMode = true; // State for auth form
+        let isViewerMode = true; // State for single note page
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a custom message modal.
+         * @param {string} title - The title of the modal.
+         * @param {string} message - The message content.
+         * @param {boolean} isConfirm - If true, shows a confirm button.
+         * @returns {Promise<boolean>} Resolves to true if confirmed, false if cancelled/closed.
+         */
+        function showMessageModal(title, message, isConfirm = false) {
+            return new Promise((resolve) => {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                messageModal.classList.remove('hidden');
+
+                if (isConfirm) {
+                    modalConfirm.classList.remove('hidden');
+                    modalConfirm.onclick = () => {
+                        messageModal.classList.add('hidden');
+                        modalConfirm.classList.add('hidden');
+                        resolve(true);
+                    };
+                } else {
+                    modalConfirm.classList.add('hidden');
+                }
+
+                modalClose.onclick = () => {
+                    messageModal.classList.add('hidden');
+                    modalConfirm.classList.add('hidden');
+                    resolve(false);
+                };
+            });
+        }
+
+        /**
+         * Displays shimmer loading effects for the notes list.
+         * @param {boolean} show - True to show, false to hide.
+         * @param {number} count - Number of shimmer items to display.
+         */
+        function toggleNotesListShimmer(show, count = 3) {
+            notesList.innerHTML = ''; // Clear existing notes/shimmers
+            if (show) {
+                for (let i = 0; i < count; i++) {
+                    const shimmerClone = shimmerTemplate.cloneNode(true);
+                    shimmerClone.removeAttribute('id'); // Remove id from clones
+                    shimmerClone.classList.remove('hidden');
+                    notesList.appendChild(shimmerClone);
+                }
+            } else {
+                notesList.innerHTML = ''; // Clear shimmers
+            }
+        }
+
+        /**
+         * Displays shimmer loading effects for the single note viewer.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleSingleNoteShimmer(show) {
+            if (show) {
+                // Clear existing content and show shimmer
+                viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
+                viewerNoteContent.innerHTML = `
+                    <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
+                `;
+                viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
+
+                // Apply shimmer directly to input fields when in editor mode
+                editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
+
+                // Ensure the containers themselves are visible
+                viewerNoteTitle.classList.remove('hidden');
+                viewerNoteContent.classList.remove('hidden');
+                viewerNoteTimestamp.classList.remove('hidden');
+
+            } else {
+                // Clear shimmer from viewer and editor fields
+                viewerNoteTitle.innerHTML = '';
+                viewerNoteContent.innerHTML = '';
+                viewerNoteTimestamp.innerHTML = '';
+
+                editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
+            }
+        }
+
+
+        /**
+         * Sets the loading state for a button.
+         * @param {HTMLButtonElement} button - The button element.
+         * @param {boolean} isLoading - True to set loading state, false to reset.
+         * @param {string} originalText - The original text of the button.
+         */
+        function setButtonLoading(button, isLoading, originalText) {
+            if (isLoading) {
+                button.dataset.originalText = originalText; // Store original text
+                button.disabled = true;
+                button.textContent = 'Loading...';
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText || originalText; // Restore original text
+                button.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+
+        /**
+         * Applies exponential backoff for retrying API calls.
+         * @param {Function} apiCall - The API function to call.
+         * @param {Array} args - Arguments to pass to the API function.
+         * @param {number} retries - Number of retries.
+         * @param {number} delay - Initial delay in ms.
+         * @returns {Promise<any>} The result of the API call.
+         */
+        async function withExponentialBackoff(apiCall, args = [], retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    return await apiCall(...args);
+                } catch (error) {
+                    if (i < retries - 1) {
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2; // Exponential increase
+                    } else {
+                        throw error; // Re-throw if all retries fail
+                    }
+                }
+            }
+        }
+
+        // --- Routing Logic ---
+
+        /**
+         * Renders the appropriate section based on the URL.
+         */
+        async function renderPage() {
+            const params = new URLSearchParams(window.location.search);
+            const noteId = params.get('noteid');
+
+            // Hide all main sections first
+            authSection.classList.add('hidden');
+            notesSection.classList.add('hidden');
+            singleNoteViewerSection.classList.add('hidden');
+
+            if (!currentUserId) {
+                // Not authenticated, show auth section
+                authSection.classList.remove('hidden');
+                // Ensure note list listener is unsubscribed when logged out
+                if (unsubscribeNotes) {
+                    unsubscribeNotes();
+                    unsubscribeNotes = null;
+                }
+                return;
+            }
+
+            // Authenticated
+            if (noteId) {
+                // Show single note viewer
+                singleNoteViewerSection.classList.remove('hidden');
+                await loadSingleNote(noteId);
+            } else {
+                // Show main notes list
+                notesSection.classList.remove('hidden');
+                loadNotesList();
+            }
+        }
+
+        // Listen for browser history changes (back/forward buttons)
+        window.addEventListener('popstate', renderPage);
+
+        /**
+         * Navigates to a new URL without a full page reload.
+         * @param {string} path - The path to navigate to (e.g., '/', '?noteid=abc').
+         */
+        function navigate(path) {
+            // Determine the base URL for GitHub Pages (e.g., /RepoName/)
+            let baseUrl = window.location.origin;
+            const pathname = window.location.pathname.split('?')[0]; // Get pathname without query string
+            const lastSlashIndex = pathname.lastIndexOf('/');
+
+            // If pathname ends with a file (e.g., /repo/index.html), go up one level
+            if (lastSlashIndex > -1 && pathname.substring(lastSlashIndex + 1).includes('.')) {
+                baseUrl += pathname.substring(0, lastSlashIndex + 1);
+            } else {
+                baseUrl += pathname;
+                if (!baseUrl.endsWith('/')) {
+                    baseUrl += '/';
+                }
+            }
+
+            // Ensure the path starts with '?' if it's a query string, or is just '/' for home.
+            const targetPath = path.startsWith('?') || path === '/' ? path : '/' + path; // Ensure correct path format
+
+            window.history.pushState({}, '', baseUrl + targetPath);
+            renderPage();
+        }
+
+
+        // --- Auth Event Listeners ---
+        toggleAuthMode.addEventListener('click', () => {
+            isSignInMode = !isSignInMode;
+            if (isSignInMode) {
+                authHeading.textContent = 'Sign In';
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                toggleAuthMode.textContent = "Don't have an account? Sign Up";
+            } else {
+                authHeading.textContent = 'Sign Up';
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                toggleAuthMode.textContent = "Already have an account? Sign In";
+            }
+        });
+
+        signInForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setButtonLoading(signInBtn, true, 'Sign In');
+            const email = e.target.signInEmail.value;
+            const password = e.target.signInPassword.value;
+            try {
+                await withExponentialBackoff(signInWithEmailAndPassword, [auth, email, password]);
+            } catch (error) {
+                showMessageModal('Sign In Failed', error.message);
+            } finally {
+                setButtonLoading(signInBtn, false, 'Sign In');
+            }
+        });
+
+        signUpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setButtonLoading(signUpBtn, true, 'Sign Up');
+            const email = e.target.signUpEmail.value;
+            const password = e.target.signUpPassword.value;
+            try {
+                await withExponentialBackoff(createUserWithEmailAndPassword, [auth, email, password]);
+            } catch (error) {
+                showMessageModal('Sign Up Failed', error.message);
+            } finally {
+                setButtonLoading(signUpBtn, false, 'Sign Up');
+            }
+        });
+
+        googleSignInBtn.addEventListener('click', async () => {
+            setButtonLoading(googleSignInBtn, true, 'Sign in with Google');
+            const provider = new GoogleAuthProvider();
+            try {
+                await withExponentialBackoff(signInWithPopup, [auth, provider]);
+            } catch (error) {
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    showMessageModal('Google Sign In Failed', error.message);
+                }
+            } finally {
+                setButtonLoading(googleSignInBtn, false, 'Sign in with Google');
+            }
+        });
+
+        signOutBtn.addEventListener('click', async () => {
+            const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);
+            if (confirmed) {
+                try {
+                    await withExponentialBackoff(signOut, [auth]);
+                } catch (error) {
+                    showMessageModal('Sign Out Failed', error.message);
+                }
+            }
+        });
+
+        signOutBtnViewer.addEventListener('click', async () => {
+            const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);
+            if (confirmed) {
+                try {
+                    await withExponentialBackoff(signOut, [auth]);
+                } catch (error) {
+                    showMessageModal('Sign Out Failed', error.message);
+                }
+            }
+        });
+
+        // --- Note Management Functions (Main List) ---
+
+        /**
+         * Renders a single note card for the main list.
+         * @param {Object} note - The note object from Firestore.
+         * @returns {HTMLElement} The created note card element.
+         */
+        function createNoteCard(note) {
+            const noteCard = document.createElement('div');
+            noteCard.id = `note-${note.id}`;
+            noteCard.className = 'bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between transform transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer';
+
+            // Determine link button color
+            const linkButtonColorClass = note.isPublic ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600';
+            const linkButtonTitle = note.isPublic ? 'Make Private' : 'Make Public';
+
+            noteCard.innerHTML = `
+                <div>
+                    <h4 class="text-xl font-semibold mb-2 text-gray-900">${note.title}</h4>
+                    <p class="text-gray-700 text-sm mb-4">${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</p>
+                    <p class="text-gray-500 text-xs mt-2">Created: ${note.createdAt?.toDate ? new Date(note.createdAt.toDate()).toLocaleString() : 'N/A'}</p>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button data-id="${note.id}"
+                            class="toggle-public-btn px-4 py-2 ${linkButtonColorClass} text-white rounded-lg transition font-medium text-sm"
+                            title="${linkButtonTitle}"
+                            onclick="event.stopPropagation()">🔗</button>
+                    <button data-id="${note.id}"
+                            class="edit-note-btn px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-medium text-sm" onclick="event.stopPropagation()">Edit</button>
+                    <button data-id="${note.id}"
+                            class="delete-note-btn px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium text-sm" onclick="event.stopPropagation()">Delete</button>
+                </div>
+            `;
+
+            // Event listener for the toggle public button
+            noteCard.querySelector('.toggle-public-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePublicStatus(note.id, note.isPublic, note);
+            });
+
+
+            // Click listener for the card to navigate to the viewer
+            noteCard.addEventListener('click', () => {
+                navigate(`?noteid=${note.id}`);
+            });
+
+            // Edit button handler (stops propagation to prevent card click)
+            noteCard.querySelector('.edit-note-btn').addEventListener('click', (e) => {
+                navigate(`?noteid=${e.target.dataset.id}`);
+                setTimeout(() => {
+                    // Check if the viewer section is actually visible before trying to switch mode
+                    if (!singleNoteViewerSection.classList.contains('hidden')) {
+                        setViewerMode(false); // Switch to editor mode
+                    }
+                }, 100); // Small delay to ensure note is loaded before switching mode
+            });
+
+            // Delete button handler (stops propagation to prevent card click)
+            noteCard.querySelector('.delete-note-btn').addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const confirmed = await showMessageModal('Confirm Delete', 'Are you sure you want to delete this note?', true);
+                if (confirmed) {
+                    try {
+                        const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, id);
+                        await withExponentialBackoff(deleteDoc, [noteDocRef]);
+                        // Also delete the public note if it exists
+                        const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, id);
+                        await withExponentialBackoff(deleteDoc, [publicNoteDocRef]); // Will simply do nothing if it doesn't exist
+                        showMessageModal('Success', 'Note deleted successfully!');
+                    } catch (error) {
+                        showMessageModal('Error', 'Failed to delete note: ' + error.message);
+                    }
+                }
+            });
+
+            return noteCard;
+        }
+
+        // --- Note Form Event Listeners (Main List) ---
+        addNoteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setButtonLoading(addNoteBtn, true, 'Add Note');
+            const title = noteTitleInput.value.trim();
+            const content = noteContentInput.value.trim();
+
+            if (!title) {
+                showMessageModal('Input Error', 'Note title cannot be empty.');
+                setButtonLoading(addNoteBtn, false, 'Add Note');
+                return;
+            }
+
+            try {
+                const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);
+                await withExponentialBackoff(addDoc, [notesCollectionRef, {
+                    title,
+                    content,
+                    createdAt: serverTimestamp(),
+                    isPublic: false // Default to private
+                }]);
+                noteTitleInput.value = '';
+                noteContentInput.value = '';
+                showMessageModal('Success', 'Note added successfully!');
+            } catch (error) {
+                showMessageModal('Error', 'Failed to add note: ' + error.message);
+            } finally {
+                setButtonLoading(addNoteBtn, false, 'Add Note');
+            }
+        });
+
+        // --- Single Note Viewer Functions ---
+
+        /**
+         * Loads and displays a single note in the viewer section.
+         * It first tries to load from the user's private notes.
+         * If not found there, it tries to load from the public notes collection.
+         * @param {string} noteId - The ID of the note to load.
+         */
+        async function loadSingleNote(noteId) {
+            if (unsubscribeNotes) {
+                unsubscribeNotes();
+                unsubscribeNotes = null;
+            }
+
+            if (!noteId) {
+                showMessageModal('Error', 'Invalid note ID.');
+                navigate('/');
+                return;
+            }
+
+            setViewerMode(true);
+            toggleSingleNoteShimmer(true);
+
+            let noteData = null;
+            let isPrivateNoteOwner = false;
+
+            try {
+                // 1. Try to load from user's private notes (only if authenticated)
+                if (currentUserId) {
+                    const privateNoteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
+                    const privateNoteSnap = await withExponentialBackoff(getDoc, [privateNoteDocRef]);
+
+                    if (privateNoteSnap.exists()) {
+                        noteData = { id: privateNoteSnap.id, ...privateNoteSnap.data() };
+                        isPrivateNoteOwner = true;
+                    }
+                }
+
+                // 2. If not found in private notes (or not authenticated), try to load from public notes
+                // Public notes can only be read by authenticated users, as per security rules.
+                if (!noteData && currentUserId) { // Only try public if authenticated
+                    const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, noteId);
+                    const publicNoteSnap = await withExponentialBackoff(getDoc, [publicNoteDocRef]);
+
+                    if (publicNoteSnap.exists()) {
+                        noteData = { id: publicNoteSnap.id, ...publicNoteSnap.data() };
+                        // If current user is the owner of this public note, they can manage it
+                        if (currentUserId && noteData.ownerId === currentUserId) {
+                             // Fetch the original private note to get its current `isPublic` status
+                             const originalPrivateNoteSnap = await withExponentialBackoff(getDoc, [doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId)]);
+                             if (originalPrivateNoteSnap.exists()) {
+                                 noteData.isPublic = originalPrivateNoteSnap.data().isPublic;
+                             }
+                            isPrivateNoteOwner = true;
+                        } else {
+                            // If it's a public note not owned by the current user, it's strictly read-only
+                            noteData.isPublic = true; // Assume public for display purposes
+                        }
+                    }
+                }
+
+                toggleSingleNoteShimmer(false);
+
+                if (noteData) {
+                    viewerNoteTitle.textContent = noteData.title;
+                    viewerNoteContent.textContent = noteData.content;
+                    viewerNoteTimestamp.textContent = `Created: ${noteData.createdAt?.toDate ? new Date(noteData.createdAt.toDate()).toLocaleString() : 'N/A'}`;
+
+                    // Show/hide edit and public toggle buttons based on ownership
+                    // Only the owner can see edit/toggle options
+                    if (isPrivateNoteOwner) {
+                        editNoteIdViewer.value = noteData.id;
+                        editNoteTitleViewer.value = noteData.title;
+                        editNoteContentViewer.value = noteData.content;
+
+                        togglePublicBtnViewer.classList.remove('hidden');
+                        saveChangesBtn.classList.remove('hidden');
+                        toggleViewEditModeBtn.classList.remove('hidden');
+
+                        // Update toggle public button color
+                        if (noteData.isPublic) {
+                            togglePublicBtnViewer.classList.remove('bg-red-500', 'hover:bg-red-600');
+                            togglePublicBtnViewer.classList.add('bg-green-500', 'hover:bg-green-600');
+                            togglePublicBtnViewer.title = 'Make Private';
+                        } else {
+                            togglePublicBtnViewer.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            togglePublicBtnViewer.classList.add('bg-red-500', 'hover:bg-red-600');
+                            togglePublicBtnViewer.title = 'Make Public';
+                        }
+                        // Add event listener for the toggle public button in viewer
+                        togglePublicBtnViewer.onclick = (e) => {
+                            e.stopPropagation();
+                            togglePublicStatus(noteData.id, noteData.isPublic, noteData);
+                        };
+
+                    } else { // Not the owner, or note not found in user's private collection
+                        togglePublicBtnViewer.classList.add('hidden');
+                        saveChangesBtn.classList.add('hidden');
+                        toggleViewEditModeBtn.classList.add('hidden');
+                        editorMode.classList.add('hidden'); // Ensure editor mode is not shown
+                        viewerMode.classList.remove('hidden'); // Ensure viewer mode is shown
+                        setViewerMode(true); // Always force viewer mode if not owner
+                    }
+
+                } else {
+                    showMessageModal('Error', 'Note not found or you do not have permission to view it.');
+                    navigate('/');
+                }
+            } catch (error) {
+                toggleSingleNoteShimmer(false);
+                showMessageModal('Error', 'Failed to load note: ' + error.message);
+                navigate('/');
+            }
+        }
+
+        /**
+         * Toggles the public/private status of a note.
+         * @param {string} noteId - The ID of the note to toggle.
+         * @param {boolean} isCurrentlyPublic - The current public status.
+         * @param {object} noteData - The full note data (title, content, createdAt, etc.)
+         */
+        async function togglePublicStatus(noteId, isCurrentlyPublic, noteData) {
+            if (!currentUserId) {
+                showMessageModal('Error', 'You must be logged in to change note visibility.');
+                return;
+            }
+
+            let confirmed = false;
+            let newIsPublicStatus = !isCurrentlyPublic;
+            let actionText = newIsPublicStatus ? 'make public' : 'make private';
+
+            if (newIsPublicStatus) {
+                confirmed = await showMessageModal('Confirm Public', 'Are you sure you want to make this note public? Others will not be able to edit it, but view it. This can always be undone.', true);
+            } else {
+                confirmed = await showMessageModal('Confirm Private', 'Are you sure you want to make this note private? It will no longer be visible to others. This can always be undone.', true);
+            }
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                // Update the private note's isPublic status
+                const privateNoteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
+                await withExponentialBackoff(updateDoc, [privateNoteDocRef, { isPublic: newIsPublicStatus }]);
+
+                // Handle public note creation/deletion
+                const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, noteId);
+
+                if (newIsPublicStatus) {
+                    // Create/update public note
+                    await withExponentialBackoff(setDoc, [publicNoteDocRef, {
+                        title: noteData.title,
+                        content: noteData.content,
+                        createdAt: noteData.createdAt, // Use original createdAt
+                        ownerId: currentUserId,
+                        originalNoteId: noteId // Link back to original
+                    }]);
+                    showMessageModal('Success', 'Note is now public!');
+                } else {
+                    // Delete public note
+                    await withExponentialBackoff(deleteDoc, [publicNoteDocRef]);
+                    showMessageModal('Success', 'Note is now private!');
+                }
+
+                // If on the single note viewer page, reload to reflect changes
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('noteid') === noteId) {
+                    await loadSingleNote(noteId);
+                }
+
+            } catch (error) {
+                showMessageModal('Error', `Failed to ${actionText} note: ` + error.message);
+            }
+        }
+
+
+        /**
+         * Toggles between viewer and editor mode for a single note.
+         * @param {boolean} isView - True for viewer mode, false for editor mode.
+         */
+        function setViewerMode(isView) {
+            isViewerMode = isView;
+            if (isViewerMode) {
+                viewerMode.classList.remove('hidden');
+                editorMode.classList.add('hidden');
+                toggleViewEditModeBtn.textContent = 'Show in Editor Mode';
+            } else {
+                viewerMode.classList.add('hidden');
+                editorMode.classList.remove('hidden');
+                toggleViewEditModeBtn.textContent = 'Show in Viewer Mode';
+            }
+        }
+
+        // --- Single Note Viewer Event Listeners ---
+        goHomeBtn.addEventListener('click', () => {
+            navigate('/');
+        });
+
+        toggleViewEditModeBtn.addEventListener('click', () => {
+            setViewerMode(!isViewerMode);
+        });
+
+        editNoteFormViewer.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setButtonLoading(saveChangesBtn, true, 'Save Changes');
+            const id = editNoteIdViewer.value;
+            const title = editNoteTitleViewer.value.trim();
+            const content = editNoteContentViewer.value.trim();
+
+            if (!title) {
+                showMessageModal('Input Error', 'Note title cannot be empty.');
+                setButtonLoading(saveChangesBtn, false, 'Save Changes');
+                return;
+            }
+
+            try {
+                const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, id);
+                await withExponentialBackoff(updateDoc, [noteDocRef, {
+                    title,
+                    content
+                }]);
+                showMessageModal('Success', 'Note updated successfully!');
+                setViewerMode(true); // Switch back to viewer mode after saving
+                await loadSingleNote(id); // Reload the note to reflect changes
+            } catch (error) {
+                showMessageModal('Error', 'Failed to update note: ' + error.message);
+            } finally {
+                setButtonLoading(saveChangesBtn, false, 'Save Changes');
+            }
+        });
+
+
+        // --- Authentication State Observer ---
+        onAuthStateChanged(auth, async (user) => {
+            currentUserId = user ? user.uid : null;
+
+            if (user) {
+                userIdDisplay.textContent = `User ID: ${user.uid}`;
+                renderPage(); // Render appropriate page after auth state is known
+            } else {
+                // User logged out
+                currentUserId = null;
+                if (unsubscribeNotes) {
+                    unsubscribeNotes(); // Unsubscribe from notes listener
+                    unsubscribeNotes = null;
+                }
+                navigate('/'); // Go to home (which will show auth section)
+                renderPage(); // Render auth section
+            }
+        });
+
+        /**
+         * Sets up the real-time listener for the main notes list.
+         */
+        function loadNotesList() {
+            if (!currentUserId || !db) {
+                console.error("Cannot load notes list: User not authenticated or Firestore not initialized.");
+                return;
+            }
+
+            toggleNotesListShimmer(true); // Show shimmer while loading notes
+
+            // If there's an existing listener, unsubscribe it first
+            if (unsubscribeNotes) {
+                unsubscribeNotes();
+            }
+
+            const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);
+            const q = query(notesCollectionRef); // orderBy commented out to avoid index issues
+
+            unsubscribeNotes = onSnapshot(q, (snapshot) => {
+                toggleNotesListShimmer(false); // Hide shimmer once data is received
+                notesList.innerHTML = ''; // Clear notes before re-rendering
+                if (snapshot.empty) {
+                    notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes yet. Add your first note!</p>';
+                } else {
+                    const notesData = [];
+                    snapshot.forEach(doc => {
+                        notesData.push({ id: doc.id, ...doc.data() });
+                    });
+                    // Sort notes in memory by createdAt descending
+                    notesData.sort((a, b) => {
+                        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                        return timeB - timeA;
+                    });
+                    notesData.forEach(note => {
+                        notesList.appendChild(createNoteCard(note));
+                    });
+                }
+            }, (error) => {
+                console.error("Error fetching notes: ", error);
+                showMessageModal('Error', 'Failed to load notes: ' + error.message);
+                toggleNotesListShimmer(false); // Hide shimmer on error
+            });
+        }
+
+
+        // Initial page render on window load
+        window.onload = () => {
+            shimmerTemplate.classList.add('hidden'); // Hide the template after initial load
+            // onAuthStateChanged will trigger renderPage after auth state is determined
+        };
+
+    </script>
+</body>
+</html>
+
