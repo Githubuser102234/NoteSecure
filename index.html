@@ -31,6 +31,8 @@
 
         /* Shimmer loading effect */
         .shimmer-bg {
+            /* Fallback background color, visible even if gradient fails */
+            background-color: #e0e0e0;
             background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%);
             background-size: 1000px 100%;
             animation: shimmer 1.5s infinite linear;
@@ -395,6 +397,7 @@
          */
         function toggleSingleNoteShimmer(show) {
             if (show) {
+                // Clear existing content and show shimmer
                 viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
                 viewerNoteContent.innerHTML = `
                     <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
@@ -402,15 +405,22 @@
                     <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
                 `;
                 viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
-                // Also apply shimmer to editor fields if they were visible
+
+                // Apply shimmer directly to input fields when in editor mode
                 editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
+
+                // Ensure the containers themselves are visible
+                viewerNoteTitle.classList.remove('hidden');
+                viewerNoteContent.classList.remove('hidden');
+                viewerNoteTimestamp.classList.remove('hidden');
+
             } else {
-                // Clear shimmer from viewer
+                // Clear shimmer from viewer and editor fields
                 viewerNoteTitle.innerHTML = '';
                 viewerNoteContent.innerHTML = '';
                 viewerNoteTimestamp.innerHTML = '';
-                // Clear shimmer from editor fields
+
                 editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
             }
@@ -505,23 +515,18 @@
          */
         function navigate(path) {
             // Determine the base URL for GitHub Pages (e.g., /RepoName/)
-            const pathnameParts = window.location.pathname.split('/');
-            // Assuming the repo name is the second part of the path, e.g., /NoteStorage/
-            // This needs to be robust for different GitHub Pages setups (user.github.io or user.github.io/repo)
             let baseUrl = window.location.origin;
-            if (pathnameParts.length > 2 && pathnameParts[1]) {
-                // If it's github.io/repo/, then pathnameParts[1] is 'repo'
-                // Or if it's user.github.io/repo/, then pathnameParts[1] is 'repo'
-                // This logic needs to be flexible. Let's make it simpler to assume it's root or repo-specific.
-                // For 'https://user.github.io/NoteStorage/', window.location.pathname is '/NoteStorage/'
-                // So, baseUrl becomes 'https://user.github.io/NoteStorage/'
-                baseUrl += window.location.pathname.split('?')[0]; // Gets '/NoteStorage/'
+            const pathname = window.location.pathname.split('?')[0]; // Get pathname without query string
+            const lastSlashIndex = pathname.lastIndexOf('/');
+
+            // If pathname ends with a file (e.g., /repo/index.html), go up one level
+            if (lastSlashIndex > -1 && pathname.substring(lastSlashIndex + 1).includes('.')) {
+                baseUrl += pathname.substring(0, lastSlashIndex + 1);
+            } else {
+                baseUrl += pathname;
                 if (!baseUrl.endsWith('/')) {
                     baseUrl += '/';
                 }
-            } else {
-                // For 'https://user.github.io/', window.location.pathname is '/'
-                baseUrl += '/';
             }
 
             // Ensure the path starts with '?' if it's a query string, or is just '/' for home.
