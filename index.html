@@ -71,6 +71,24 @@
             width: 80px;
             @apply rounded-md shimmer-bg;
         }
+        /* Specific shimmer for viewer title/content */
+        .shimmer-text-block {
+            @apply shimmer-bg rounded-md;
+            height: 1.5em; /* Approximate line height */
+            margin-bottom: 0.5em;
+        }
+        .shimmer-text-block-lg {
+            height: 2.5em; /* For titles */
+            width: 70%;
+        }
+        .shimmer-text-block-md {
+            height: 1.5em; /* For content lines */
+            width: 100%;
+        }
+        .shimmer-text-block-sm {
+            height: 1.2em; /* For timestamps */
+            width: 40%;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -102,7 +120,7 @@
                     <label for="signInPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signInPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>
+                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>
             </form>
 
             <!-- Sign Up Form -->
@@ -115,7 +133,7 @@
                     <label for="signUpPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signUpPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">Sign Up</button>
+                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">Sign Up</button>
             </form>
 
             <div class="mt-6 text-center">
@@ -134,7 +152,7 @@
             </div>
 
             <!-- Google Sign In Button -->
-            <button id="googleSignInBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-red-700 transition">
+            <button type="button" id="googleSignInBtn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-red-700 transition">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M7 11v2.4h3.97c-.16 1.02-.67 1.87-1.44 2.45v3.16h4.15c2.45-2.26 3.87-5.54 3.87-9.3A9.998 9.998 0 0012 3C6.48 3 2 7.48 2 13s4.48 10 10 10c4.78 0 8.87-3.08 9.9-7.38l-4.25-3.32c-.93 2.82-3.6 4.7-6.09 4.7-3.23 0-5.87-2.6-5.87-5.8S8.77 7.2 12 7.2c1.76 0 3.32.6 4.56 1.76L19 6.2C17.27 4.59 14.77 3 12 3 6.48 3 2 7.48 2 13s4.48 10 10 10z"/>
                 </svg>
@@ -148,7 +166,7 @@
                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Your Notes</h1>
                 <div class="flex items-center space-x-4">
                     <span id="userIdDisplay" class="text-sm text-gray-600 font-medium"></span>
-                    <button id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
+                    <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
 
@@ -164,7 +182,7 @@
                         <label for="noteContent" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
                         <textarea id="noteContent" rows="4" placeholder="Write your thoughts here..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Add Note</button>
+                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Add Note</button>
                 </form>
             </div>
 
@@ -174,7 +192,7 @@
                 <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
                     <div class="shimmer-title"></div>
                     <div class="shimmer-content"></div>
-                    <div class="flex justify-end space-x-2">
+                    <div class="flex justify-end space-x-2 mt-4">
                         <div class="shimmer-button"></div>
                         <div class="shimmer-button"></div>
                     </div>
@@ -187,23 +205,23 @@
             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Note Details</h1>
                 <div class="flex items-center space-x-4">
-                    <button id="goHomeBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">Go Home</button>
-                    <button id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">Show in Editor Mode</button>
-                    <button id="signOutBtnViewer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
+                    <button type="button" id="goHomeBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">Go Home</button>
+                    <button type="button" id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">Show in Editor Mode</button>
+                    <button type="button" id="signOutBtnViewer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
 
-            <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+            <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px]">
                 <!-- Viewer Mode -->
                 <div id="viewerMode" class="">
                     <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>
-                    <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap"></p>
+                    <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>
                     <p id="viewerNoteTimestamp" class="text-gray-500 text-sm mt-6"></p>
                 </div>
 
                 <!-- Editor Mode -->
                 <div id="editorMode" class="hidden space-y-4">
-                    <form id="editNoteForm" class="space-y-4">
+                    <form id="editNoteFormViewer" class="space-y-4">
                         <input type="hidden" id="editNoteIdViewer">
                         <div>
                             <label for="editNoteTitleViewer" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -214,7 +232,7 @@
                             <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                         </div>
                         <div class="flex justify-end space-x-3 mt-4">
-                            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>
+                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -243,7 +261,7 @@
             query,
             onSnapshot,
             doc,
-            getDoc, // Added getDoc for fetching single note
+            getDoc,
             updateDoc,
             deleteDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -280,7 +298,11 @@
         const signOutBtn = document.getElementById('signOutBtn'); // For main list
         const userIdDisplay = document.getElementById('userIdDisplay');
 
-        const addNoteForm = document.getElementById('addNoteForm');
+        // Buttons with loading states
+        const signInBtn = document.getElementById('signInBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+
         const noteTitleInput = document.getElementById('noteTitle');
         const noteContentInput = document.getElementById('noteContent');
         const notesList = document.getElementById('notesList');
@@ -304,10 +326,11 @@
         const viewerNoteContent = document.getElementById('viewerNoteContent');
         const viewerNoteTimestamp = document.getElementById('viewerNoteTimestamp');
 
-        const editNoteForm = document.getElementById('editNoteForm'); // Reusing this ID from previous code for the editor in viewer
+        const editNoteFormViewer = document.getElementById('editNoteFormViewer');
         const editNoteIdViewer = document.getElementById('editNoteIdViewer');
         const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');
         const editNoteContentViewer = document.getElementById('editNoteContentViewer');
+        const saveChangesBtn = document.getElementById('saveChangesBtn');
 
 
         let isSignInMode = true; // State for auth form
@@ -348,11 +371,11 @@
         }
 
         /**
-         * Displays shimmer loading effects.
+         * Displays shimmer loading effects for the notes list.
          * @param {boolean} show - True to show, false to hide.
          * @param {number} count - Number of shimmer items to display.
          */
-        function toggleShimmer(show, count = 3) {
+        function toggleNotesListShimmer(show, count = 3) {
             notesList.innerHTML = ''; // Clear existing notes/shimmers
             if (show) {
                 for (let i = 0; i < count; i++) {
@@ -363,6 +386,53 @@
                 }
             } else {
                 notesList.innerHTML = ''; // Clear shimmers
+            }
+        }
+
+        /**
+         * Displays shimmer loading effects for the single note viewer.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleSingleNoteShimmer(show) {
+            if (show) {
+                viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
+                viewerNoteContent.innerHTML = `
+                    <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
+                `;
+                viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
+                // Also apply shimmer to editor fields if they were visible
+                editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
+            } else {
+                // Clear shimmer from viewer
+                viewerNoteTitle.innerHTML = '';
+                viewerNoteContent.innerHTML = '';
+                viewerNoteTimestamp.innerHTML = '';
+                // Clear shimmer from editor fields
+                editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
+            }
+        }
+
+
+        /**
+         * Sets the loading state for a button.
+         * @param {HTMLButtonElement} button - The button element.
+         * @param {boolean} isLoading - True to set loading state, false to reset.
+         * @param {string} originalText - The original text of the button.
+         */
+        function setButtonLoading(button, isLoading, originalText) {
+            if (isLoading) {
+                button.dataset.originalText = originalText; // Store original text
+                button.disabled = true;
+                button.textContent = 'Loading...';
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText || originalText; // Restore original text
+                button.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         }
 
@@ -434,10 +504,33 @@
          * @param {string} path - The path to navigate to (e.g., '/', '?noteid=abc').
          */
         function navigate(path) {
-            const baseUrl = window.location.origin + window.location.pathname.split('?')[0]; // Gets 'https://githubuser102234.github.io/NoteStorage/'
-            window.history.pushState({}, '', baseUrl + path);
+            // Determine the base URL for GitHub Pages (e.g., /RepoName/)
+            const pathnameParts = window.location.pathname.split('/');
+            // Assuming the repo name is the second part of the path, e.g., /NoteStorage/
+            // This needs to be robust for different GitHub Pages setups (user.github.io or user.github.io/repo)
+            let baseUrl = window.location.origin;
+            if (pathnameParts.length > 2 && pathnameParts[1]) {
+                // If it's github.io/repo/, then pathnameParts[1] is 'repo'
+                // Or if it's user.github.io/repo/, then pathnameParts[1] is 'repo'
+                // This logic needs to be flexible. Let's make it simpler to assume it's root or repo-specific.
+                // For 'https://user.github.io/NoteStorage/', window.location.pathname is '/NoteStorage/'
+                // So, baseUrl becomes 'https://user.github.io/NoteStorage/'
+                baseUrl += window.location.pathname.split('?')[0]; // Gets '/NoteStorage/'
+                if (!baseUrl.endsWith('/')) {
+                    baseUrl += '/';
+                }
+            } else {
+                // For 'https://user.github.io/', window.location.pathname is '/'
+                baseUrl += '/';
+            }
+
+            // Ensure the path starts with '?' if it's a query string, or is just '/' for home.
+            const targetPath = path.startsWith('?') || path === '/' ? path : '/' + path; // Ensure correct path format
+
+            window.history.pushState({}, '', baseUrl + targetPath);
             renderPage();
         }
+
 
         // --- Auth Event Listeners ---
         toggleAuthMode.addEventListener('click', () => {
@@ -457,39 +550,46 @@
 
         signInForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setButtonLoading(signInBtn, true, 'Sign In');
             const email = e.target.signInEmail.value;
             const password = e.target.signInPassword.value;
             try {
                 await withExponentialBackoff(signInWithEmailAndPassword, [auth, email, password]);
             } catch (error) {
                 showMessageModal('Sign In Failed', error.message);
+            } finally {
+                setButtonLoading(signInBtn, false, 'Sign In');
             }
         });
 
         signUpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setButtonLoading(signUpBtn, true, 'Sign Up');
             const email = e.target.signUpEmail.value;
             const password = e.target.signUpPassword.value;
             try {
                 await withExponentialBackoff(createUserWithEmailAndPassword, [auth, email, password]);
             } catch (error) {
                 showMessageModal('Sign Up Failed', error.message);
+            } finally {
+                setButtonLoading(signUpBtn, false, 'Sign Up');
             }
         });
 
         googleSignInBtn.addEventListener('click', async () => {
+            setButtonLoading(googleSignInBtn, true, 'Sign in with Google');
             const provider = new GoogleAuthProvider();
             try {
                 await withExponentialBackoff(signInWithPopup, [auth, provider]);
             } catch (error) {
-                // Handle specific errors like 'auth/popup-closed-by-user'
                 if (error.code !== 'auth/popup-closed-by-user') {
                     showMessageModal('Google Sign In Failed', error.message);
                 }
+            } finally {
+                setButtonLoading(googleSignInBtn, false, 'Sign in with Google');
             }
         });
 
-        // Sign out button on main notes list
         signOutBtn.addEventListener('click', async () => {
             const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);
             if (confirmed) {
@@ -501,7 +601,6 @@
             }
         });
 
-        // Sign out button on single note viewer
         signOutBtnViewer.addEventListener('click', async () => {
             const confirmed = await showMessageModal('Confirm Sign Out', 'Are you sure you want to sign out?', true);
             if (confirmed) {
@@ -531,7 +630,7 @@
                     <p class="text-gray-500 text-xs mt-2">Created: ${note.createdAt?.toDate ? new Date(note.createdAt.toDate()).toLocaleString() : 'N/A'}</p>
                 </div>
                 <div class="flex justify-end space-x-2 mt-4">
-                    <button data-id="${note.id}" data-title="${note.title}" data-content="${note.content}"
+                    <button data-id="${note.id}"
                             class="edit-note-btn px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-medium text-sm" onclick="event.stopPropagation()">Edit</button>
                     <button data-id="${note.id}"
                             class="delete-note-btn px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium text-sm" onclick="event.stopPropagation()">Delete</button>
@@ -545,11 +644,10 @@
 
             // Edit button handler (stops propagation to prevent card click)
             noteCard.querySelector('.edit-note-btn').addEventListener('click', (e) => {
-                // For the main list, we'll navigate to viewer mode and switch to editor there
                 navigate(`?noteid=${e.target.dataset.id}`);
-                // Once loaded, the viewer will be forced to editor mode.
                 setTimeout(() => {
-                    if (singleNoteViewerSection.classList.contains('hidden') === false) {
+                    // Check if the viewer section is actually visible before trying to switch mode
+                    if (!singleNoteViewerSection.classList.contains('hidden')) {
                         setViewerMode(false); // Switch to editor mode
                     }
                 }, 100); // Small delay to ensure note is loaded before switching mode
@@ -576,11 +674,13 @@
         // --- Note Form Event Listeners (Main List) ---
         addNoteForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setButtonLoading(addNoteBtn, true, 'Add Note');
             const title = noteTitleInput.value.trim();
             const content = noteContentInput.value.trim();
 
             if (!title) {
                 showMessageModal('Input Error', 'Note title cannot be empty.');
+                setButtonLoading(addNoteBtn, false, 'Add Note');
                 return;
             }
 
@@ -596,6 +696,8 @@
                 showMessageModal('Success', 'Note added successfully!');
             } catch (error) {
                 showMessageModal('Error', 'Failed to add note: ' + error.message);
+            } finally {
+                setButtonLoading(addNoteBtn, false, 'Add Note');
             }
         });
 
@@ -618,15 +720,14 @@
                 return;
             }
 
-            // Show loading state for the viewer
-            viewerNoteTitle.textContent = 'Loading note...';
-            viewerNoteContent.textContent = '';
-            viewerNoteTimestamp.textContent = '';
             setViewerMode(true); // Default to viewer mode
+            toggleSingleNoteShimmer(true); // Show shimmer for single note content
 
             try {
                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
                 const noteSnap = await withExponentialBackoff(getDoc, [noteDocRef]);
+
+                toggleSingleNoteShimmer(false); // Hide shimmer once data is fetched
 
                 if (noteSnap.exists()) {
                     const noteData = noteSnap.data();
@@ -644,6 +745,7 @@
                     navigate('/'); // Go back to home if note doesn't exist
                 }
             } catch (error) {
+                toggleSingleNoteShimmer(false); // Hide shimmer on error
                 showMessageModal('Error', 'Failed to load note: ' + error.message);
                 navigate('/'); // Go back to home on error
             }
@@ -675,14 +777,16 @@
             setViewerMode(!isViewerMode);
         });
 
-        editNoteForm.addEventListener('submit', async (e) => {
+        editNoteFormViewer.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setButtonLoading(saveChangesBtn, true, 'Save Changes');
             const id = editNoteIdViewer.value;
             const title = editNoteTitleViewer.value.trim();
             const content = editNoteContentViewer.value.trim();
 
             if (!title) {
                 showMessageModal('Input Error', 'Note title cannot be empty.');
+                setButtonLoading(saveChangesBtn, false, 'Save Changes');
                 return;
             }
 
@@ -694,10 +798,11 @@
                 }]);
                 showMessageModal('Success', 'Note updated successfully!');
                 setViewerMode(true); // Switch back to viewer mode after saving
-                // The onSnapshot listener (if active for single note) or reload will update content
                 await loadSingleNote(id); // Reload the note to reflect changes
             } catch (error) {
                 showMessageModal('Error', 'Failed to update note: ' + error.message);
+            } finally {
+                setButtonLoading(saveChangesBtn, false, 'Save Changes');
             }
         });
 
@@ -730,7 +835,7 @@
                 return;
             }
 
-            toggleShimmer(true); // Show shimmer while loading notes
+            toggleNotesListShimmer(true); // Show shimmer while loading notes
 
             // If there's an existing listener, unsubscribe it first
             if (unsubscribeNotes) {
@@ -741,7 +846,7 @@
             const q = query(notesCollectionRef); // orderBy commented out to avoid index issues
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
-                toggleShimmer(false); // Hide shimmer once data is received
+                toggleNotesListShimmer(false); // Hide shimmer once data is received
                 notesList.innerHTML = ''; // Clear notes before re-rendering
                 if (snapshot.empty) {
                     notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes yet. Add your first note!</p>';
@@ -763,7 +868,7 @@
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
-                toggleShimmer(false); // Hide shimmer on error
+                toggleNotesListShimmer(false); // Hide shimmer on error
             });
         }
 
