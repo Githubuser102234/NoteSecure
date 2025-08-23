@@ -208,7 +208,7 @@
                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Note Details</h1>
                 <div class="flex items-center space-x-4">
                     <button type="button" id="goHomeBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold">Go Home</button>
-                    <button type="button" id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold hidden">Show in Editor Mode</button>
+                    <button type="button" id="toggleViewEditModeBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">Show in Editor Mode</button>
                     <button type="button" id="signOutBtnViewer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
@@ -234,9 +234,7 @@
                             <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                         </div>
                         <div class="flex justify-end space-x-3 mt-4">
-                            <button type="button" data-id="" id="togglePublicBtnViewer"
-                                    class="px-6 py-3 text-white rounded-lg transition font-semibold hidden">🔗</button>
-                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold hidden">Save Changes</button>
+                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -267,8 +265,7 @@
             doc,
             getDoc,
             updateDoc,
-            deleteDoc,
-            setDoc // Added for public notes
+            deleteDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration (provided by user for GitHub Pages)
@@ -336,7 +333,6 @@
         const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');
         const editNoteContentViewer = document.getElementById('editNoteContentViewer');
         const saveChangesBtn = document.getElementById('saveChangesBtn');
-        const togglePublicBtnViewer = document.getElementById('togglePublicBtnViewer');
 
 
         let isSignInMode = true; // State for auth form
@@ -631,12 +627,7 @@
         function createNoteCard(note) {
             const noteCard = document.createElement('div');
             noteCard.id = `note-${note.id}`;
-            noteCard.className = 'bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between transform transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer';
-
-            // Determine link button color
-            const linkButtonColorClass = note.isPublic ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600';
-            const linkButtonTitle = note.isPublic ? 'Make Private' : 'Make Public';
-
+            noteCard.className = 'bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col justify-between transform transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer'; // Added cursor-pointer
             noteCard.innerHTML = `
                 <div>
                     <h4 class="text-xl font-semibold mb-2 text-gray-900">${note.title}</h4>
@@ -645,22 +636,11 @@
                 </div>
                 <div class="flex justify-end space-x-2 mt-4">
                     <button data-id="${note.id}"
-                            class="toggle-public-btn px-4 py-2 ${linkButtonColorClass} text-white rounded-lg transition font-medium text-sm"
-                            title="${linkButtonTitle}"
-                            onclick="event.stopPropagation()">🔗</button>
-                    <button data-id="${note.id}"
                             class="edit-note-btn px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-medium text-sm" onclick="event.stopPropagation()">Edit</button>
                     <button data-id="${note.id}"
                             class="delete-note-btn px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-medium text-sm" onclick="event.stopPropagation()">Delete</button>
                 </div>
             `;
-
-            // Event listener for the toggle public button
-            noteCard.querySelector('.toggle-public-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                togglePublicStatus(note.id, note.isPublic, note);
-            });
-
 
             // Click listener for the card to navigate to the viewer
             noteCard.addEventListener('click', () => {
@@ -686,9 +666,6 @@
                     try {
                         const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, id);
                         await withExponentialBackoff(deleteDoc, [noteDocRef]);
-                        // Also delete the public note if it exists
-                        const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, id);
-                        await withExponentialBackoff(deleteDoc, [publicNoteDocRef]); // Will simply do nothing if it doesn't exist
                         showMessageModal('Success', 'Note deleted successfully!');
                     } catch (error) {
                         showMessageModal('Error', 'Failed to delete note: ' + error.message);
@@ -717,8 +694,7 @@
                 await withExponentialBackoff(addDoc, [notesCollectionRef, {
                     title,
                     content,
-                    createdAt: serverTimestamp(),
-                    isPublic: false // Default to private
+                    createdAt: serverTimestamp()
                 }]);
                 noteTitleInput.value = '';
                 noteContentInput.value = '';
@@ -734,178 +710,51 @@
 
         /**
          * Loads and displays a single note in the viewer section.
-         * It first tries to load from the user's private notes.
-         * If not found there, it tries to load from the public notes collection.
          * @param {string} noteId - The ID of the note to load.
          */
         async function loadSingleNote(noteId) {
+            // Unsubscribe from main notes list if currently active
             if (unsubscribeNotes) {
                 unsubscribeNotes();
                 unsubscribeNotes = null;
             }
 
-            if (!noteId) {
-                showMessageModal('Error', 'Invalid note ID.');
-                navigate('/');
+            if (!noteId || !currentUserId) {
+                showMessageModal('Error', 'Invalid note ID or user not authenticated.');
+                navigate('/'); // Go back to home
                 return;
             }
 
-            setViewerMode(true);
-            toggleSingleNoteShimmer(true);
-
-            let noteData = null;
-            let isPrivateNoteOwner = false;
+            setViewerMode(true); // Default to viewer mode
+            toggleSingleNoteShimmer(true); // Show shimmer for single note content
 
             try {
-                // 1. Try to load from user's private notes (only if authenticated)
-                if (currentUserId) {
-                    const privateNoteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
-                    const privateNoteSnap = await withExponentialBackoff(getDoc, [privateNoteDocRef]);
+                const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
+                const noteSnap = await withExponentialBackoff(getDoc, [noteDocRef]);
 
-                    if (privateNoteSnap.exists()) {
-                        noteData = { id: privateNoteSnap.id, ...privateNoteSnap.data() };
-                        isPrivateNoteOwner = true;
-                    }
-                }
+                toggleSingleNoteShimmer(false); // Hide shimmer once data is fetched
 
-                // 2. If not found in private notes (or not authenticated), try to load from public notes
-                // Public notes can only be read by authenticated users, as per security rules.
-                if (!noteData && currentUserId) { // Only try public if authenticated
-                    const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, noteId);
-                    const publicNoteSnap = await withExponentialBackoff(getDoc, [publicNoteDocRef]);
-
-                    if (publicNoteSnap.exists()) {
-                        noteData = { id: publicNoteSnap.id, ...publicNoteSnap.data() };
-                        // If current user is the owner of this public note, they can manage it
-                        if (currentUserId && noteData.ownerId === currentUserId) {
-                             // Fetch the original private note to get its current `isPublic` status
-                             const originalPrivateNoteSnap = await withExponentialBackoff(getDoc, [doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId)]);
-                             if (originalPrivateNoteSnap.exists()) {
-                                 noteData.isPublic = originalPrivateNoteSnap.data().isPublic;
-                             }
-                            isPrivateNoteOwner = true;
-                        } else {
-                            // If it's a public note not owned by the current user, it's strictly read-only
-                            noteData.isPublic = true; // Assume public for display purposes
-                        }
-                    }
-                }
-
-                toggleSingleNoteShimmer(false);
-
-                if (noteData) {
+                if (noteSnap.exists()) {
+                    const noteData = noteSnap.data();
                     viewerNoteTitle.textContent = noteData.title;
                     viewerNoteContent.textContent = noteData.content;
                     viewerNoteTimestamp.textContent = `Created: ${noteData.createdAt?.toDate ? new Date(noteData.createdAt.toDate()).toLocaleString() : 'N/A'}`;
 
-                    // Show/hide edit and public toggle buttons based on ownership
-                    // Only the owner can see edit/toggle options
-                    if (isPrivateNoteOwner) {
-                        editNoteIdViewer.value = noteData.id;
-                        editNoteTitleViewer.value = noteData.title;
-                        editNoteContentViewer.value = noteData.content;
-
-                        togglePublicBtnViewer.classList.remove('hidden');
-                        saveChangesBtn.classList.remove('hidden');
-                        toggleViewEditModeBtn.classList.remove('hidden');
-
-                        // Update toggle public button color
-                        if (noteData.isPublic) {
-                            togglePublicBtnViewer.classList.remove('bg-red-500', 'hover:bg-red-600');
-                            togglePublicBtnViewer.classList.add('bg-green-500', 'hover:bg-green-600');
-                            togglePublicBtnViewer.title = 'Make Private';
-                        } else {
-                            togglePublicBtnViewer.classList.remove('bg-green-500', 'hover:bg-green-600');
-                            togglePublicBtnViewer.classList.add('bg-red-500', 'hover:bg-red-600');
-                            togglePublicBtnViewer.title = 'Make Public';
-                        }
-                        // Add event listener for the toggle public button in viewer
-                        togglePublicBtnViewer.onclick = (e) => {
-                            e.stopPropagation();
-                            togglePublicStatus(noteData.id, noteData.isPublic, noteData);
-                        };
-
-                    } else { // Not the owner, or note not found in user's private collection
-                        togglePublicBtnViewer.classList.add('hidden');
-                        saveChangesBtn.classList.add('hidden');
-                        toggleViewEditModeBtn.classList.add('hidden');
-                        editorMode.classList.add('hidden'); // Ensure editor mode is not shown
-                        viewerMode.classList.remove('hidden'); // Ensure viewer mode is shown
-                        setViewerMode(true); // Always force viewer mode if not owner
-                    }
+                    // Populate editor fields
+                    editNoteIdViewer.value = noteId;
+                    editNoteTitleViewer.value = noteData.title;
+                    editNoteContentViewer.value = noteData.content;
 
                 } else {
-                    showMessageModal('Error', 'Note not found or you do not have permission to view it.');
-                    navigate('/');
+                    showMessageModal('Error', 'Note not found.');
+                    navigate('/'); // Go back to home if note doesn't exist
                 }
             } catch (error) {
-                toggleSingleNoteShimmer(false);
+                toggleSingleNoteShimmer(false); // Hide shimmer on error
                 showMessageModal('Error', 'Failed to load note: ' + error.message);
-                navigate('/');
+                navigate('/'); // Go back to home on error
             }
         }
-
-        /**
-         * Toggles the public/private status of a note.
-         * @param {string} noteId - The ID of the note to toggle.
-         * @param {boolean} isCurrentlyPublic - The current public status.
-         * @param {object} noteData - The full note data (title, content, createdAt, etc.)
-         */
-        async function togglePublicStatus(noteId, isCurrentlyPublic, noteData) {
-            if (!currentUserId) {
-                showMessageModal('Error', 'You must be logged in to change note visibility.');
-                return;
-            }
-
-            let confirmed = false;
-            let newIsPublicStatus = !isCurrentlyPublic;
-            let actionText = newIsPublicStatus ? 'make public' : 'make private';
-
-            if (newIsPublicStatus) {
-                confirmed = await showMessageModal('Confirm Public', 'Are you sure you want to make this note public? Others will not be able to edit it, but view it. This can always be undone.', true);
-            } else {
-                confirmed = await showMessageModal('Confirm Private', 'Are you sure you want to make this note private? It will no longer be visible to others. This can always be undone.', true);
-            }
-
-            if (!confirmed) {
-                return;
-            }
-
-            try {
-                // Update the private note's isPublic status
-                const privateNoteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
-                await withExponentialBackoff(updateDoc, [privateNoteDocRef, { isPublic: newIsPublicStatus }]);
-
-                // Handle public note creation/deletion
-                const publicNoteDocRef = doc(db, `artifacts/${appId}/public/data/public_notes`, noteId);
-
-                if (newIsPublicStatus) {
-                    // Create/update public note
-                    await withExponentialBackoff(setDoc, [publicNoteDocRef, {
-                        title: noteData.title,
-                        content: noteData.content,
-                        createdAt: noteData.createdAt, // Use original createdAt
-                        ownerId: currentUserId,
-                        originalNoteId: noteId // Link back to original
-                    }]);
-                    showMessageModal('Success', 'Note is now public!');
-                } else {
-                    // Delete public note
-                    await withExponentialBackoff(deleteDoc, [publicNoteDocRef]);
-                    showMessageModal('Success', 'Note is now private!');
-                }
-
-                // If on the single note viewer page, reload to reflect changes
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('noteid') === noteId) {
-                    await loadSingleNote(noteId);
-                }
-
-            } catch (error) {
-                showMessageModal('Error', `Failed to ${actionText} note: ` + error.message);
-            }
-        }
-
 
         /**
          * Toggles between viewer and editor mode for a single note.
@@ -1038,4 +887,3 @@
     </script>
 </body>
 </html>
-
