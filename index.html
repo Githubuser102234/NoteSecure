@@ -215,9 +215,7 @@
             onAuthStateChanged,
             signOut,
             GoogleAuthProvider,
-            signInWithPopup,
-            signInWithCustomToken,
-            signInAnonymously
+            signInWithPopup
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import {
             getFirestore,
@@ -225,35 +223,31 @@
             addDoc,
             serverTimestamp,
             query,
-            orderBy,
             onSnapshot,
             doc,
             updateDoc,
-            deleteDoc,
-            getDocs,
-            getDoc,
-            where
+            deleteDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase variables (provided by Canvas environment)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "YOUR_API_KEY", // Replace with your actual key if not running in Canvas
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+        // Firebase Configuration (provided by user for GitHub Pages)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDs3PMoc6m-8jUFYn_sjDKXdSacAmrVjJE",
+            authDomain: "notestorage-e4a87.firebaseapp.com",
+            projectId: "notestorage-e4a87",
+            storageBucket: "notestorage-e4a87.firebasestorage.app",
+            messagingSenderId: "674683993472",
+            appId: "1:674683993472:web:d4ea28a5a77dfba459d565",
+            measurementId: "G-WW2ZS4XNB7"
         };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Static App ID for Firestore path (derived from projectId)
+        const appId = firebaseConfig.projectId;
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         let currentUserId = null;
-        let isAuthReady = false; // Flag to indicate if auth state has been checked
 
         // --- DOM Elements ---
         const authSection = document.getElementById('authSection');
@@ -437,7 +431,7 @@
                 <div>
                     <h4 class="text-xl font-semibold mb-2 text-gray-900">${note.title}</h4>
                     <p class="text-gray-700 text-sm mb-4">${note.content}</p>
-                    <p class="text-gray-500 text-xs mt-2">Created: ${new Date(note.createdAt.toDate()).toLocaleString()}</p>
+                    <p class="text-gray-500 text-xs mt-2">Created: ${note.createdAt?.toDate ? new Date(note.createdAt.toDate()).toLocaleString() : 'N/A'}</p>
                 </div>
                 <div class="flex justify-end space-x-2 mt-4">
                     <button data-id="${note.id}" data-title="${note.title}" data-content="${note.content}"
@@ -531,7 +525,6 @@
         // --- Authentication State Observer ---
         onAuthStateChanged(auth, async (user) => {
             currentUserId = user ? user.uid : null;
-            isAuthReady = true; // Auth state has been checked
 
             if (user) {
                 authSection.classList.add('hidden');
@@ -543,7 +536,7 @@
                     const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);
                     // Note: orderBy is commented out to avoid potential index errors.
                     // Data will be sorted in memory.
-                    const q = query(notesCollectionRef); // , orderBy('createdAt', 'desc')
+                    const q = query(notesCollectionRef);
 
                     onSnapshot(q, (snapshot) => {
                         notesList.innerHTML = ''; // Clear notes before re-rendering
@@ -576,32 +569,9 @@
             }
         });
 
-        // Initial sign-in with custom token if available
-        window.onload = async () => {
-            if (initialAuthToken) {
-                try {
-                    await withExponentialBackoff(signInWithCustomToken, [auth, initialAuthToken]);
-                    // Auth state change listener will handle UI update
-                } catch (error) {
-                    console.error("Error signing in with custom token:", error);
-                    // Fallback to anonymous or show auth UI if custom token fails
-                    try {
-                        await withExponentialBackoff(signInAnonymously, [auth]);
-                    } catch (anonError) {
-                        console.error("Error signing in anonymously:", anonError);
-                        showMessageModal('Authentication Error', 'Failed to authenticate. Please sign in.');
-                    }
-                }
-            } else {
-                // If no custom token, try anonymous sign-in or let onAuthStateChanged handle it
-                try {
-                    await withExponentialBackoff(signInAnonymously, [auth]);
-                } catch (anonError) {
-                    console.error("Error signing in anonymously:", anonError);
-                    showMessageModal('Authentication Error', 'Failed to authenticate. Please sign in.');
-                }
-            }
-            shimmerTemplate.classList.add('hidden'); // Hide the template after initial load
+        // Hide shimmer template on window load
+        window.onload = () => {
+            shimmerTemplate.classList.add('hidden');
         };
 
     </script>
