@@ -888,14 +888,17 @@
         // --- Authentication State Observer ---
         onAuthStateChanged(auth, async (user) => {
             currentUserId = user ? user.uid : null;
-
             if (user) {
                 userIdDisplay.textContent = `User ID: ${user.uid}`;
-                userIdDisplay.classList.remove('animate-pulse'); // FIX: Stop shimmering on auth success
+                // Explicitly check and remove the class to be robust
+                if (userIdDisplay.classList.contains('animate-pulse')) {
+                    userIdDisplay.classList.remove('animate-pulse');
+                }
                 renderPage(); // Render appropriate page after auth state is known
             } else {
                 // User logged out
                 currentUserId = null;
+                userIdDisplay.textContent = 'User ID: Loading...'; // Reset text on logout
                 userIdDisplay.classList.add('animate-pulse'); // Add back shimmer when logging out
                 if (unsubscribeNotes) {
                     unsubscribeNotes(); // Unsubscribe from notes listener
