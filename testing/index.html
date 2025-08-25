@@ -830,8 +830,8 @@
 
             // Show the loading dots and hide the content
             viewerLoader.classList.remove('hidden-until-loading');
-            viewerMode.classList.add('hidden-until-loading');
-            editorMode.classList.add('hidden-until-loading');
+            viewerMode.classList.add('hidden');
+            editorMode.classList.add('hidden');
 
             try {
                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
@@ -850,8 +850,8 @@
                     editNoteTitleViewer.value = noteData.title;
                     editNoteContentViewer.value = noteData.content;
 
-                    viewerMode.classList.remove('hidden-until-loading');
-
+                    setViewerMode(true); // Ensure viewer mode is shown
+                    
                 } else {
                     showMessageModal('Error', 'Note not found.');
                     navigate('/'); // Go back to home if note doesn't exist
