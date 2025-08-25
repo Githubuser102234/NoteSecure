@@ -50,7 +50,7 @@
             }
         }
         .shimmer-card {
-            @apply p-4 rounded-xl shadow-md bg-white;
+            @apply p-6 rounded-xl shadow-md bg-white;
         }
         .shimmer-line {
             height: 16px;
@@ -233,7 +233,6 @@
             </header>
 
             <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px] relative">
-
                 <div id="shimmerSingleNote" class="absolute inset-0 p-6 flex flex-col justify-center items-center bg-white rounded-xl z-20 hidden">
                     <div class="w-full max-w-lg space-y-4 animate-pulse">
                         <div class="shimmer-text-block shimmer-text-block-lg w-3/4"></div>
@@ -243,7 +242,7 @@
                         <div class="shimmer-text-block shimmer-text-block-sm w-1/4 mt-8"></div>
                     </div>
                 </div>
-
+                
                 <div id="viewerMode" class="">
                     <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>
                     <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>
@@ -416,8 +415,8 @@
          * @param {number} count - Number of shimmer items to display.
          */
         function toggleNotesListShimmer(show, count = 3) {
+            notesList.innerHTML = '';
             if (show) {
-                notesList.innerHTML = '';
                 for (let i = 0; i < count; i++) {
                     const shimmerClone = shimmerTemplateContainer.firstElementChild.cloneNode(true);
                     notesList.appendChild(shimmerClone);
@@ -434,8 +433,15 @@
         function toggleSingleNoteShimmer(show) {
             if (show) {
                 shimmerSingleNote.classList.remove('hidden');
+                viewerMode.classList.add('hidden');
+                editorMode.classList.add('hidden');
             } else {
                 shimmerSingleNote.classList.add('hidden');
+                if (isViewerMode) {
+                    viewerMode.classList.remove('hidden');
+                } else {
+                    editorMode.classList.remove('hidden');
+                }
             }
         }
 
@@ -951,6 +957,7 @@
 
         // Initial page render on window load
         window.onload = () => {
+            shimmerTemplateContainer.classList.add('hidden');
             // onAuthStateChanged will trigger renderPage after auth state is determined
         };
 
