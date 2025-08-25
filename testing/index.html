@@ -829,7 +829,7 @@
             setViewerMode(true); // Default to viewer mode
 
             // Show the loading dots and hide the content
-            viewerLoader.classList.remove('hidden-until-loading');
+            viewerLoader.classList.remove('hidden');
             viewerMode.classList.add('hidden');
             editorMode.classList.add('hidden');
 
@@ -837,7 +837,8 @@
                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
                 const noteSnap = await withExponentialBackoff(getDoc, [noteDocRef]);
 
-                viewerLoader.classList.add('hidden-until-loading');
+                // *** The fix is here: hide the loader when the data is successfully retrieved ***
+                viewerLoader.classList.add('hidden');
 
                 if (noteSnap.exists()) {
                     const noteData = noteSnap.data();
@@ -857,7 +858,8 @@
                     navigate('/'); // Go back to home if note doesn't exist
                 }
             } catch (error) {
-                viewerLoader.classList.add('hidden-until-loading');
+                // *** The fix is also here: hide the loader on error to prevent it from getting stuck ***
+                viewerLoader.classList.add('hidden');
                 showMessageModal('Error', 'Failed to load note: ' + error.message);
                 navigate('/'); // Go back to home on error
             }
@@ -961,8 +963,8 @@
             }
 
             // Show the loading dots and hide the content area
-            notesListLoader.classList.remove('hidden-until-loading');
-            notesList.classList.add('hidden-until-loading');
+            notesListLoader.classList.remove('hidden');
+            notesList.classList.add('hidden');
 
             // If there's an existing listener, unsubscribe it first
             if (unsubscribeNotes) {
@@ -973,8 +975,8 @@
             const q = query(notesCollectionRef);
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
-                notesListLoader.classList.add('hidden-until-loading'); // Hide loader once data arrives
-                notesList.classList.remove('hidden-until-loading'); // Show notes list
+                notesListLoader.classList.add('hidden'); // Hide loader once data arrives
+                notesList.classList.remove('hidden'); // Show notes list
 
                 allNotes = []; // Clear and rebuild the notes array
                 snapshot.forEach(doc => {
@@ -990,8 +992,8 @@
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
-                notesListLoader.classList.add('hidden-until-loading'); // Hide loader on error
-                notesList.classList.remove('hidden-until-loading'); // Show empty list
+                notesListLoader.classList.add('hidden'); // Hide loader on error
+                notesList.classList.remove('hidden'); // Show empty list
             });
         }
 
