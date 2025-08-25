@@ -31,7 +31,7 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
-            }
+        }
 
         /* Shimmer loading effect */
         .shimmer-bg {
@@ -100,6 +100,7 @@
 <body class="flex flex-col min-h-screen">
     <div id="app" class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8">
 
+        <!-- Message Modal -->
         <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
             <div class="bg-white p-6 rounded-xl shadow-lg w-11/12 max-w-sm">
                 <h3 id="modalTitle" class="font-bold text-lg mb-2 text-gray-900"></h3>
@@ -111,6 +112,7 @@
             </div>
         </div>
 
+        <!-- Authentication Section -->
         <div id="authSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200 mt-10 hidden">
             <h2 id="authHeading" class="text-3xl font-bold text-center mb-6 text-gray-900">Sign In</h2>
 
@@ -165,6 +167,7 @@
             </button>
         </div>
 
+        <!-- Notes List Section -->
         <div id="notesSection" class="hidden">
             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
                 <div class="flex-1 mb-4 sm:mb-0">
@@ -195,8 +198,8 @@
                 </form>
             </div>
 
+            <!-- Shimmer template for notes list -->
             <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Shimmer Template for notes list items -->
                 <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
                     <div class="shimmer-title"></div>
                     <div class="shimmer-content"></div>
@@ -208,6 +211,7 @@
             </div>
         </div>
 
+        <!-- Single Note Viewer/Editor Section -->
         <div id="singleNoteViewerSection" class="hidden">
             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Note Details</h1>
@@ -337,7 +341,7 @@
         const viewerNoteContent = document.getElementById('viewerNoteContent');
         const viewerNoteTimestamp = document.getElementById('viewerNoteTimestamp');
         
-        // Get the "Copy Text" button
+        // New: Get the "Copy Text" button
         const copyTextBtn = document.getElementById('copyTextBtn');
 
         const editNoteFormViewer = document.getElementById('editNoteFormViewer');
@@ -390,20 +394,16 @@
          * @param {number} count - Number of shimmer items to display.
          */
         function toggleNotesListShimmer(show, count = 3) {
-            // Clear existing notes/shimmers before adding new ones
-            notesList.innerHTML = ''; 
+            notesList.innerHTML = ''; // Clear existing notes/shimmers
             if (show) {
-                // Display multiple shimmer cards
                 for (let i = 0; i < count; i++) {
                     const shimmerClone = shimmerTemplate.cloneNode(true);
-                    shimmerClone.removeAttribute('id'); // Remove id from clones to avoid duplicates
+                    shimmerClone.removeAttribute('id'); // Remove id from clones
                     shimmerClone.classList.remove('hidden');
                     notesList.appendChild(shimmerClone);
                 }
             } else {
-                // When content is loaded, the actual notes will be rendered,
-                // so we just need to ensure shimmers are cleared here if any remain.
-                // The renderNotes function will then populate notesList.
+                notesList.innerHTML = ''; // Clear shimmers
             }
         }
 
@@ -413,27 +413,30 @@
          */
         function toggleSingleNoteShimmer(show) {
             if (show) {
-                // Clear existing content and show shimmer placeholders
+                // Clear existing content and show shimmer
                 viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
                 viewerNoteContent.innerHTML = `
                     <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
                     <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
                     <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
-                    <div class="shimmer-text-block shimmer-text-block-md w-9/12 animate-pulse"></div>
                 `;
                 viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
 
-                // Apply shimmer to input fields when in editor mode if they are visible
+                // Apply shimmer directly to input fields when in editor mode
                 editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
 
+                // Ensure the containers themselves are visible
+                viewerNoteTitle.classList.remove('hidden');
+                viewerNoteContent.classList.remove('hidden');
+                viewerNoteTimestamp.classList.remove('hidden');
+
             } else {
-                // Clear shimmer placeholders from viewer elements
+                // Clear shimmer from viewer and editor fields
                 viewerNoteTitle.innerHTML = '';
                 viewerNoteContent.innerHTML = '';
                 viewerNoteTimestamp.innerHTML = '';
 
-                // Remove shimmer from editor fields
                 editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
             }
@@ -756,7 +759,7 @@
         }
 
         function renderNotes(notesToRender) {
-            notesList.innerHTML = ''; // Clear existing shimmers or notes
+            notesList.innerHTML = '';
             if (notesToRender.length === 0) {
                 notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes found matching your search.</p>';
             } else {
@@ -847,14 +850,17 @@
             setViewerMode(!isViewerMode);
         });
         
-        // Add a click event listener for the "Copy Text" button
+        // New: Add a click event listener for the "Copy Text" button
         copyTextBtn.addEventListener('click', async () => {
             const textToCopy = viewerNoteContent.textContent;
             try {
-                // Using document.execCommand('copy') as navigator.clipboard.writeText() may not work in iframes
-                const textArea = document.createElement("textarea");
+                // Using document.execCommand('copy') for broader compatibility in iFrames
+                const textArea = document.createElement('textarea');
                 textArea.value = textToCopy;
+                textArea.style.position = 'fixed'; // Prevent scrolling to bottom
+                textArea.style.left = '-9999px'; // Move off-screen
                 document.body.appendChild(textArea);
+                textArea.focus();
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
@@ -935,6 +941,7 @@
             const q = query(notesCollectionRef); // orderBy commented out to avoid index issues
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
+                toggleNotesListShimmer(false); // Hide shimmer once data is received
                 allNotes = []; // Clear and rebuild the notes array
                 snapshot.forEach(doc => {
                     allNotes.push({ id: doc.id, ...doc.data() });
@@ -946,7 +953,6 @@
                     return timeB - timeA;
                 });
                 renderNotes(allNotes);
-                toggleNotesListShimmer(false); // Hide shimmer once data is received and rendered
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
