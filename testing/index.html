@@ -95,6 +95,44 @@
             height: 1.2em; /* For timestamps */
             width: 40%;
         }
+
+        /* Bouncing dots loading animation */
+        .bouncing-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 24px; /* Adjust height as needed */
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: #3b82f6; /* Tailwind's blue-500 */
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1.0);
+            }
+        }
+
+        .hidden-until-loading {
+            display: none;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -123,7 +161,14 @@
                     <label for="signInPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signInPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>
+                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    <span id="signInBtnText">Sign In</span>
+                    <div id="signInLoader" class="bouncing-dots hidden-until-loading">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </button>
             </form>
 
             <form id="signUpForm" class="space-y-4 hidden">
@@ -135,7 +180,14 @@
                     <label for="signUpPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signUpPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">Sign Up</button>
+                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                    <span id="signUpBtnText">Sign Up</span>
+                    <div id="signUpLoader" class="bouncing-dots hidden-until-loading">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </button>
             </form>
             
             <div class="mt-4 text-center">
@@ -191,7 +243,14 @@
                         <label for="noteContent" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
                         <textarea id="noteContent" rows="4" placeholder="Write your thoughts here..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                     </div>
-                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">Add Note</button>
+                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <span id="addNoteBtnText">Add Note</span>
+                        <div id="addNoteLoader" class="bouncing-dots hidden-until-loading">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                    </button>
                 </form>
             </div>
 
@@ -237,7 +296,14 @@
                             <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                         </div>
                         <div class="flex justify-end space-x-3 mt-4">
-                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>
+                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                                <span id="saveChangesBtnText">Save Changes</span>
+                                <div id="saveChangesLoader" class="bouncing-dots hidden-until-loading">
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                </div>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -310,8 +376,16 @@
 
         // Buttons with loading states
         const signInBtn = document.getElementById('signInBtn');
+        const signInBtnText = document.getElementById('signInBtnText');
+        const signInLoader = document.getElementById('signInLoader');
+
         const signUpBtn = document.getElementById('signUpBtn');
+        const signUpBtnText = document.getElementById('signUpBtnText');
+        const signUpLoader = document.getElementById('signUpLoader');
+
         const addNoteBtn = document.getElementById('addNoteBtn');
+        const addNoteBtnText = document.getElementById('addNoteBtnText');
+        const addNoteLoader = document.getElementById('addNoteLoader');
 
         const noteTitleInput = document.getElementById('noteTitle');
         const noteContentInput = document.getElementById('noteContent');
@@ -344,6 +418,8 @@
         const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');
         const editNoteContentViewer = document.getElementById('editNoteContentViewer');
         const saveChangesBtn = document.getElementById('saveChangesBtn');
+        const saveChangesBtnText = document.getElementById('saveChangesBtnText');
+        const saveChangesLoader = document.getElementById('saveChangesLoader');
 
 
         let isSignInMode = true; // State for auth form
@@ -389,9 +465,7 @@
          * @param {number} count - Number of shimmer items to display.
          */
         function toggleNotesListShimmer(show, count = 3) {
-            const currentShimmers = notesList.querySelectorAll('.shimmer-card:not(#shimmerTemplate)');
-            currentShimmers.forEach(shimmer => shimmer.remove());
-            
+            notesList.innerHTML = ''; // Clear existing notes/shimmers
             if (show) {
                 for (let i = 0; i < count; i++) {
                     const shimmerClone = shimmerTemplate.cloneNode(true);
@@ -399,6 +473,8 @@
                     shimmerClone.classList.remove('hidden');
                     notesList.appendChild(shimmerClone);
                 }
+            } else {
+                notesList.innerHTML = ''; // Clear shimmers
             }
         }
 
@@ -439,20 +515,22 @@
 
 
         /**
-         * Sets the loading state for a button.
-         * @param {HTMLButtonElement} button - The button element.
+         * Sets the loading state for a button with a bouncing dots loader.
+         * @param {HTMLElement} button - The button element.
+         * @param {HTMLElement} textElement - The span containing the button text.
+         * @param {HTMLElement} loaderElement - The bouncing dots container.
          * @param {boolean} isLoading - True to set loading state, false to reset.
-         * @param {string} originalText - The original text of the button.
          */
-        function setButtonLoading(button, isLoading, originalText) {
+        function setButtonLoading(button, textElement, loaderElement, isLoading) {
             if (isLoading) {
-                button.dataset.originalText = originalText; // Store original text
                 button.disabled = true;
-                button.textContent = 'Loading...';
+                textElement.classList.add('hidden-until-loading');
+                loaderElement.classList.remove('hidden-until-loading');
                 button.classList.add('opacity-75', 'cursor-not-allowed');
             } else {
                 button.disabled = false;
-                button.textContent = button.dataset.originalText || originalText; // Restore original text
+                textElement.classList.remove('hidden-until-loading');
+                loaderElement.classList.add('hidden-until-loading');
                 button.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         }
@@ -568,7 +646,7 @@
 
         signInForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            setButtonLoading(signInBtn, true, 'Sign In');
+            setButtonLoading(signInBtn, signInBtnText, signInLoader, true);
             const email = e.target.signInEmail.value;
             const password = e.target.signInPassword.value;
             try {
@@ -576,13 +654,13 @@
             } catch (error) {
                 showMessageModal('Sign In Failed', error.message);
             } finally {
-                setButtonLoading(signInBtn, false, 'Sign In');
+                setButtonLoading(signInBtn, signInBtnText, signInLoader, false);
             }
         });
 
         signUpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            setButtonLoading(signUpBtn, true, 'Sign Up');
+            setButtonLoading(signUpBtn, signUpBtnText, signUpLoader, true);
             const email = e.target.signUpEmail.value;
             const password = e.target.signUpPassword.value;
             try {
@@ -590,12 +668,12 @@
             } catch (error) {
                 showMessageModal('Sign Up Failed', error.message);
             } finally {
-                setButtonLoading(signUpBtn, false, 'Sign Up');
+                setButtonLoading(signUpBtn, signUpBtnText, signUpLoader, false);
             }
         });
 
         googleSignInBtn.addEventListener('click', async () => {
-            setButtonLoading(googleSignInBtn, true, 'Sign in with Google');
+            setButtonLoading(googleSignInBtn, googleSignInBtn, googleSignInBtn, true); // Quick fix to use the same function, needs adjustment for Google button
             const provider = new GoogleAuthProvider();
             try {
                 await withExponentialBackoff(signInWithPopup, [auth, provider]);
@@ -604,7 +682,7 @@
                     showMessageModal('Google Sign In Failed', error.message);
                 }
             } finally {
-                setButtonLoading(googleSignInBtn, false, 'Sign in with Google');
+                setButtonLoading(googleSignInBtn, googleSignInBtn, googleSignInBtn, false);
             }
         });
 
@@ -707,13 +785,13 @@
         // --- Note Form Event Listeners (Main List) ---
         addNoteForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            setButtonLoading(addNoteBtn, true, 'Add Note');
+            setButtonLoading(addNoteBtn, addNoteBtnText, addNoteLoader, true);
             const title = noteTitleInput.value.trim();
             const content = noteContentInput.value.trim();
 
             if (!title) {
                 showMessageModal('Input Error', 'Note title cannot be empty.');
-                setButtonLoading(addNoteBtn, false, 'Add Note');
+                setButtonLoading(addNoteBtn, addNoteBtnText, addNoteLoader, false);
                 return;
             }
 
@@ -730,7 +808,7 @@
             } catch (error) {
                 showMessageModal('Error', 'Failed to add note: ' + error.message);
             } finally {
-                setButtonLoading(addNoteBtn, false, 'Add Note');
+                setButtonLoading(addNoteBtn, addNoteBtnText, addNoteLoader, false);
             }
         });
 
@@ -754,10 +832,7 @@
         }
 
         function renderNotes(notesToRender) {
-            // Remove existing notes before rendering new ones
-            const existingNotes = notesList.querySelectorAll('.bg-white:not(.shimmer-card)');
-            existingNotes.forEach(note => note.remove());
-
+            notesList.innerHTML = '';
             if (notesToRender.length === 0) {
                 notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes found matching your search.</p>';
             } else {
@@ -863,14 +938,14 @@
 
         editNoteFormViewer.addEventListener('submit', async (e) => {
             e.preventDefault();
-            setButtonLoading(saveChangesBtn, true, 'Save Changes');
+            setButtonLoading(saveChangesBtn, saveChangesBtnText, saveChangesLoader, true);
             const id = editNoteIdViewer.value;
             const title = editNoteTitleViewer.value.trim();
             const content = editNoteContentViewer.value.trim();
 
             if (!title) {
                 showMessageModal('Input Error', 'Note title cannot be empty.');
-                setButtonLoading(saveChangesBtn, false, 'Save Changes');
+                setButtonLoading(saveChangesBtn, saveChangesBtnText, saveChangesLoader, false);
                 return;
             }
 
@@ -886,7 +961,7 @@
             } catch (error) {
                 showMessageModal('Error', 'Failed to update note: ' + error.message);
             } finally {
-                setButtonLoading(saveChangesBtn, false, 'Save Changes');
+                setButtonLoading(saveChangesBtn, saveChangesBtnText, saveChangesLoader, false);
             }
         });
 
