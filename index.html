@@ -167,7 +167,13 @@
 
         <div id="notesSection" class="hidden">
             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
-                <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Your Notes</h1>
+                <div class="flex-1 mb-4 sm:mb-0">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Your Notes</h1>
+                    <div class="relative w-full max-w-md">
+                        <input type="text" id="searchInput" placeholder="Search notes by title or content..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition pl-10 pr-4">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
+                    </div>
+                </div>
                 <div class="flex items-center space-x-4">
                     <span id="userIdDisplay" class="text-sm text-gray-600 font-medium"></span>
                     <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
@@ -285,6 +291,7 @@
         const db = getFirestore(app);
         let currentUserId = null;
         let unsubscribeNotes = null; // To store the onSnapshot unsubscribe function
+        let allNotes = []; // Store all notes for local searching
 
         // --- DOM Elements ---
         const authSection = document.getElementById('authSection');
@@ -296,6 +303,7 @@
         const googleSignInBtn = document.getElementById('googleSignInBtn');
         const signOutBtn = document.getElementById('signOutBtn'); // For main list
         const userIdDisplay = document.getElementById('userIdDisplay');
+        const searchInput = document.getElementById('searchInput'); // New search input
 
         // Added forgot password button
         const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
@@ -726,6 +734,41 @@
             }
         });
 
+        // --- Search Functionality ---
+        function searchNotes(query) {
+            notesList.innerHTML = '';
+            const normalizedQuery = query.toLowerCase().trim();
+
+            if (normalizedQuery === '') {
+                // If query is empty, show all notes
+                renderNotes(allNotes);
+                return;
+            }
+
+            const filteredNotes = allNotes.filter(note =>
+                note.title.toLowerCase().includes(normalizedQuery) ||
+                note.content.toLowerCase().includes(normalizedQuery)
+            );
+
+            renderNotes(filteredNotes);
+        }
+
+        function renderNotes(notesToRender) {
+            notesList.innerHTML = '';
+            if (notesToRender.length === 0) {
+                notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes found matching your search.</p>';
+            } else {
+                notesToRender.forEach(note => {
+                    notesList.appendChild(createNoteCard(note));
+                });
+            }
+        }
+
+        // Add event listeners for the search input
+        searchInput.addEventListener('input', (e) => {
+            searchNotes(e.target.value);
+        });
+
         // --- Single Note Viewer Functions ---
 
         /**
@@ -885,24 +928,17 @@
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
                 toggleNotesListShimmer(false); // Hide shimmer once data is received
-                notesList.innerHTML = ''; // Clear notes before re-rendering
-                if (snapshot.empty) {
-                    notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes yet. Add your first note!</p>';
-                } else {
-                    const notesData = [];
-                    snapshot.forEach(doc => {
-                        notesData.push({ id: doc.id, ...doc.data() });
-                    });
-                    // Sort notes in memory by createdAt descending
-                    notesData.sort((a, b) => {
-                        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-                        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-                        return timeB - timeA;
-                    });
-                    notesData.forEach(note => {
-                        notesList.appendChild(createNoteCard(note));
-                    });
-                }
+                allNotes = []; // Clear and rebuild the notes array
+                snapshot.forEach(doc => {
+                    allNotes.push({ id: doc.id, ...doc.data() });
+                });
+                // Sort notes in memory by createdAt descending
+                allNotes.sort((a, b) => {
+                    const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+                    const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+                    return timeB - timeA;
+                });
+                renderNotes(allNotes);
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
