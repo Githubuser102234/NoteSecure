@@ -168,8 +168,18 @@
         <div id="notesSection" class="hidden">
             <header class="flex flex-col sm:flex-row items-center justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-gray-200">
                 <h1 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Your Notes</h1>
+                <div class="flex-grow flex items-center justify-center sm:justify-start sm:ml-6 mb-4 sm:mb-0">
+                    <div class="relative w-full max-w-md">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input type="text" id="noteSearch" placeholder="Search notes..." class="block w-full rounded-full border-0 py-2 pl-10 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
                 <div class="flex items-center space-x-4">
-                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium"></span>
+                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium hidden sm:block"></span>
                     <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
@@ -285,6 +295,7 @@
         const db = getFirestore(app);
         let currentUserId = null;
         let unsubscribeNotes = null; // To store the onSnapshot unsubscribe function
+        let allNotes = []; // Cache all notes for searching
 
         // --- DOM Elements ---
         const authSection = document.getElementById('authSection');
@@ -309,6 +320,7 @@
         const noteContentInput = document.getElementById('noteContent');
         const notesList = document.getElementById('notesList');
         const shimmerTemplate = document.getElementById('shimmerTemplate');
+        const noteSearchInput = document.getElementById('noteSearch');
 
         const messageModal = document.getElementById('messageModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -696,6 +708,26 @@
             return noteCard;
         }
 
+        /**
+         * Renders the notes list, optionally filtered by a search term.
+         * @param {string} searchTerm - The term to filter by.
+         */
+        function renderNotes(searchTerm = '') {
+            const filteredNotes = allNotes.filter(note => {
+                const searchLower = searchTerm.toLowerCase();
+                return note.title.toLowerCase().includes(searchLower) || note.content.toLowerCase().includes(searchLower);
+            });
+
+            notesList.innerHTML = '';
+            if (filteredNotes.length === 0) {
+                notesList.innerHTML = `<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes found matching your search.</p>`;
+            } else {
+                filteredNotes.forEach(note => {
+                    notesList.appendChild(createNoteCard(note));
+                });
+            }
+        }
+
         // --- Note Form Event Listeners (Main List) ---
         addNoteForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -724,6 +756,12 @@
             } finally {
                 setButtonLoading(addNoteBtn, false, 'Add Note');
             }
+        });
+
+        // --- Note Search Event Listener ---
+        noteSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value;
+            renderNotes(searchTerm);
         });
 
         // --- Single Note Viewer Functions ---
@@ -885,23 +923,20 @@
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
                 toggleNotesListShimmer(false); // Hide shimmer once data is received
-                notesList.innerHTML = ''; // Clear notes before re-rendering
+                allNotes = []; // Clear and rebuild cache
                 if (snapshot.empty) {
                     notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes yet. Add your first note!</p>';
                 } else {
-                    const notesData = [];
                     snapshot.forEach(doc => {
-                        notesData.push({ id: doc.id, ...doc.data() });
+                        allNotes.push({ id: doc.id, ...doc.data() });
                     });
                     // Sort notes in memory by createdAt descending
-                    notesData.sort((a, b) => {
+                    allNotes.sort((a, b) => {
                         const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
                         const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
                         return timeB - timeA;
                     });
-                    notesData.forEach(note => {
-                        notesList.appendChild(createNoteCard(note));
-                    });
+                    renderNotes(noteSearchInput.value); // Initial render with current search term
                 }
             }, (error) => {
                 console.error("Error fetching notes: ", error);
