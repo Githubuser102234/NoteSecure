@@ -50,7 +50,7 @@
             }
         }
         .shimmer-card {
-            @apply p-6 rounded-xl shadow-md bg-white;
+            @apply p-4 rounded-xl shadow-md bg-white;
         }
         .shimmer-line {
             height: 16px;
@@ -94,19 +94,6 @@
         .shimmer-text-block-sm {
             height: 1.2em; /* For timestamps */
             width: 40%;
-        }
-
-        .shimmer-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 10;
         }
     </style>
 </head>
@@ -208,15 +195,13 @@
                 </form>
             </div>
 
-            <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative min-h-[200px]">
-                <div id="shimmerTemplateContainer" class="hidden">
-                    <div class="shimmer-card animate-pulse">
-                        <div class="shimmer-title"></div>
-                        <div class="shimmer-content"></div>
-                        <div class="flex justify-end space-x-2 mt-4">
-                            <div class="shimmer-button"></div>
-                            <div class="shimmer-button"></div>
-                        </div>
+            <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
+                    <div class="shimmer-title"></div>
+                    <div class="shimmer-content"></div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <div class="shimmer-button"></div>
+                        <div class="shimmer-button"></div>
                     </div>
                 </div>
             </div>
@@ -232,17 +217,7 @@
                 </div>
             </header>
 
-            <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px] relative">
-                <div id="shimmerSingleNote" class="absolute inset-0 p-6 flex flex-col justify-center items-center bg-white rounded-xl z-20 hidden">
-                    <div class="w-full max-w-lg space-y-4 animate-pulse">
-                        <div class="shimmer-text-block shimmer-text-block-lg w-3/4"></div>
-                        <div class="shimmer-text-block shimmer-text-block-md w-full"></div>
-                        <div class="shimmer-text-block shimmer-text-block-md w-11/12"></div>
-                        <div class="shimmer-text-block shimmer-text-block-md w-10/12"></div>
-                        <div class="shimmer-text-block shimmer-text-block-sm w-1/4 mt-8"></div>
-                    </div>
-                </div>
-                
+            <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px]">
                 <div id="viewerMode" class="">
                     <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>
                     <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>
@@ -341,7 +316,7 @@
         const noteTitleInput = document.getElementById('noteTitle');
         const noteContentInput = document.getElementById('noteContent');
         const notesList = document.getElementById('notesList');
-        const shimmerTemplateContainer = document.getElementById('shimmerTemplateContainer');
+        const shimmerTemplate = document.getElementById('shimmerTemplate');
 
         const messageModal = document.getElementById('messageModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -369,8 +344,7 @@
         const editNoteTitleViewer = document.getElementById('editNoteTitleViewer');
         const editNoteContentViewer = document.getElementById('editNoteContentViewer');
         const saveChangesBtn = document.getElementById('saveChangesBtn');
-        
-        const shimmerSingleNote = document.getElementById('shimmerSingleNote');
+
 
         let isSignInMode = true; // State for auth form
         let isViewerMode = true; // State for single note page
@@ -415,14 +389,16 @@
          * @param {number} count - Number of shimmer items to display.
          */
         function toggleNotesListShimmer(show, count = 3) {
-            notesList.innerHTML = '';
+            const currentShimmers = notesList.querySelectorAll('.shimmer-card:not(#shimmerTemplate)');
+            currentShimmers.forEach(shimmer => shimmer.remove());
+            
             if (show) {
                 for (let i = 0; i < count; i++) {
-                    const shimmerClone = shimmerTemplateContainer.firstElementChild.cloneNode(true);
+                    const shimmerClone = shimmerTemplate.cloneNode(true);
+                    shimmerClone.removeAttribute('id'); // Remove id from clones
+                    shimmerClone.classList.remove('hidden');
                     notesList.appendChild(shimmerClone);
                 }
-            } else {
-                notesList.innerHTML = '';
             }
         }
 
@@ -432,16 +408,32 @@
          */
         function toggleSingleNoteShimmer(show) {
             if (show) {
-                shimmerSingleNote.classList.remove('hidden');
-                viewerMode.classList.add('hidden');
-                editorMode.classList.add('hidden');
+                // Clear existing content and show shimmer
+                viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
+                viewerNoteContent.innerHTML = `
+                    <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
+                    <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
+                `;
+                viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
+
+                // Apply shimmer directly to input fields when in editor mode
+                editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
+
+                // Ensure the containers themselves are visible
+                viewerNoteTitle.classList.remove('hidden');
+                viewerNoteContent.classList.remove('hidden');
+                viewerNoteTimestamp.classList.remove('hidden');
+
             } else {
-                shimmerSingleNote.classList.add('hidden');
-                if (isViewerMode) {
-                    viewerMode.classList.remove('hidden');
-                } else {
-                    editorMode.classList.remove('hidden');
-                }
+                // Clear shimmer from viewer and editor fields
+                viewerNoteTitle.innerHTML = '';
+                viewerNoteContent.innerHTML = '';
+                viewerNoteTimestamp.innerHTML = '';
+
+                editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
+                editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
             }
         }
 
@@ -762,7 +754,10 @@
         }
 
         function renderNotes(notesToRender) {
-            notesList.innerHTML = '';
+            // Remove existing notes before rendering new ones
+            const existingNotes = notesList.querySelectorAll('.bg-white:not(.shimmer-card)');
+            existingNotes.forEach(note => note.remove());
+
             if (notesToRender.length === 0) {
                 notesList.innerHTML = '<p class="col-span-full text-center text-gray-500 text-lg py-10">No notes found matching your search.</p>';
             } else {
@@ -957,7 +952,7 @@
 
         // Initial page render on window load
         window.onload = () => {
-            shimmerTemplateContainer.classList.add('hidden');
+            shimmerTemplate.classList.add('hidden'); // Hide the template after initial load
             // onAuthStateChanged will trigger renderPage after auth state is determined
         };
 
