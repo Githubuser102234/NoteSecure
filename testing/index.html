@@ -39,6 +39,8 @@
             background-color: #e0e0e0;
             background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%);
             background-size: 1000px 100%;
+        }
+        .shimmer-bg.animate-pulse {
             animation: shimmer 1.5s infinite linear;
         }
         @keyframes shimmer {
@@ -175,7 +177,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium shimmer-bg rounded-md h-5 w-24 animate-pulse"></span>
+                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium shimmer-bg rounded-md h-5 w-24"></span>
                     <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
@@ -196,12 +198,12 @@
             </div>
 
             <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
-                    <div class="shimmer-title"></div>
-                    <div class="shimmer-content"></div>
+                <div class="shimmer-card hidden" id="shimmerTemplate">
+                    <div class="shimmer-title animate-pulse"></div>
+                    <div class="shimmer-content animate-pulse"></div>
                     <div class="flex justify-end space-x-2 mt-4">
-                        <div class="shimmer-button"></div>
-                        <div class="shimmer-button"></div>
+                        <div class="shimmer-button animate-pulse"></div>
+                        <div class="shimmer-button animate-pulse"></div>
                     </div>
                 </div>
             </div>
@@ -230,11 +232,11 @@
                         <input type="hidden" id="editNoteIdViewer">
                         <div>
                             <label for="editNoteTitleViewer" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                            <input type="text" id="editNoteTitleViewer" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shimmer-bg animate-pulse" required>
+                            <input type="text" id="editNoteTitleViewer" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shimmer-bg" required>
                         </div>
                         <div>
                             <label for="editNoteContentViewer" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                            <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shimmer-bg animate-pulse"></textarea>
+                            <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition shimmer-bg"></textarea>
                         </div>
                         <div class="flex justify-end space-x-3 mt-4">
                             <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">Save Changes</button>
@@ -348,7 +350,6 @@
 
         let isSignInMode = true; // State for auth form
         let isViewerMode = true; // State for single note page
-        let shimmerCount = 0; // Tracks the number of shimmer elements currently in the DOM
 
         // --- Utility Functions ---
 
@@ -390,22 +391,16 @@
          * @param {number} count - Number of shimmer items to display.
          */
         function toggleNotesListShimmer(show, count = 3) {
+            notesList.innerHTML = ''; // Clear existing notes/shimmers
             if (show) {
-                // Add shimmer elements only if they are not already present
-                if (shimmerCount === 0) {
-                    notesList.innerHTML = ''; // Clear existing notes/shimmers
-                    for (let i = 0; i < count; i++) {
-                        // Create a new element from the inner HTML of the template
-                        const shimmerDiv = document.createElement('div');
-                        shimmerDiv.innerHTML = shimmerTemplate.innerHTML;
-                        shimmerDiv.className = shimmerTemplate.className.replace('hidden', ''); // Add back the base classes
-                        notesList.appendChild(shimmerDiv);
-                        shimmerCount++;
-                    }
+                for (let i = 0; i < count; i++) {
+                    const shimmerClone = shimmerTemplate.cloneNode(true);
+                    shimmerClone.removeAttribute('id'); // Remove id from clones
+                    shimmerClone.classList.remove('hidden');
+                    notesList.appendChild(shimmerClone);
                 }
             } else {
                 notesList.innerHTML = ''; // Clear shimmers
-                shimmerCount = 0;
             }
         }
 
@@ -415,30 +410,25 @@
          */
         function toggleSingleNoteShimmer(show) {
             if (show) {
-                // Clear existing content and show shimmer
-                viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
-                viewerNoteContent.innerHTML = `
-                    <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
-                    <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
-                    <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
-                `;
-                viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
-
-                // Apply shimmer directly to input fields when in editor mode
+                // Apply shimmer directly to the elements
+                viewerNoteTitle.classList.add('shimmer-bg', 'animate-pulse');
+                viewerNoteContent.classList.add('shimmer-bg', 'animate-pulse');
+                viewerNoteTimestamp.classList.add('shimmer-bg', 'animate-pulse');
                 editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
 
-                // Ensure the containers themselves are visible
-                viewerNoteTitle.classList.remove('hidden');
-                viewerNoteContent.classList.remove('hidden');
-                viewerNoteTimestamp.classList.remove('hidden');
+                // Clear text content while shimmering
+                viewerNoteTitle.textContent = '';
+                viewerNoteContent.textContent = '';
+                viewerNoteTimestamp.textContent = '';
+                editNoteTitleViewer.value = '';
+                editNoteContentViewer.value = '';
 
             } else {
-                // Clear shimmer from viewer and editor fields
-                viewerNoteTitle.innerHTML = '';
-                viewerNoteContent.innerHTML = '';
-                viewerNoteTimestamp.innerHTML = '';
-
+                // Remove shimmer classes
+                viewerNoteTitle.classList.remove('shimmer-bg', 'animate-pulse');
+                viewerNoteContent.classList.remove('shimmer-bg', 'animate-pulse');
+                viewerNoteTimestamp.classList.remove('shimmer-bg', 'animate-pulse');
                 editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
                 editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
             }
@@ -956,9 +946,7 @@
 
         // Initial page render on window load
         window.onload = () => {
-            // Hide the template and remove it from the DOM after initial load
-            shimmerTemplate.classList.add('hidden');
-            shimmerTemplate.remove();
+            shimmerTemplate.classList.add('hidden'); // Hide the template after initial load
             // onAuthStateChanged will trigger renderPage after auth state is determined
         };
 
