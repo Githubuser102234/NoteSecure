@@ -161,7 +161,7 @@
                     <label for="signInPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signInPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                <button type="submit" id="signInBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition flex justify-center items-center">
                     <span id="signInBtnText">Sign In</span>
                     <div id="signInLoader" class="bouncing-dots hidden-until-loading">
                         <div class="dot"></div>
@@ -180,7 +180,7 @@
                     <label for="signUpPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signUpPassword" placeholder="********" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
                 </div>
-                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                <button type="submit" id="signUpBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition flex justify-center items-center">
                     <span id="signUpBtnText">Sign Up</span>
                     <div id="signUpLoader" class="bouncing-dots hidden-until-loading">
                         <div class="dot"></div>
@@ -243,7 +243,7 @@
                         <label for="noteContent" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
                         <textarea id="noteContent" rows="4" placeholder="Write your thoughts here..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                     </div>
-                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    <button type="submit" id="addNoteBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition flex justify-center items-center">
                         <span id="addNoteBtnText">Add Note</span>
                         <div id="addNoteLoader" class="bouncing-dots hidden-until-loading">
                             <div class="dot"></div>
@@ -255,12 +255,11 @@
             </div>
 
             <div id="notesList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="shimmer-card animate-pulse hidden" id="shimmerTemplate">
-                    <div class="shimmer-title"></div>
-                    <div class="shimmer-content"></div>
-                    <div class="flex justify-end space-x-2 mt-4">
-                        <div class="shimmer-button"></div>
-                        <div class="shimmer-button"></div>
+                <div id="notesListLoader" class="col-span-full flex justify-center items-center py-10 hidden-until-loading">
+                    <div class="bouncing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
                     </div>
                 </div>
             </div>
@@ -277,6 +276,13 @@
             </header>
 
             <div id="noteViewerContent" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 min-h-[200px]">
+                <div id="viewerLoader" class="flex justify-center items-center py-10 hidden-until-loading">
+                    <div class="bouncing-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
                 <div id="viewerMode" class="">
                     <h3 id="viewerNoteTitle" class="text-3xl font-bold text-gray-900 mb-4"></h3>
                     <p id="viewerNoteContent" class="text-gray-700 text-lg whitespace-pre-wrap min-h-[100px]"></p>
@@ -296,7 +302,7 @@
                             <textarea id="editNoteContentViewer" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
                         </div>
                         <div class="flex justify-end space-x-3 mt-4">
-                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                            <button type="submit" id="saveChangesBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition flex justify-center items-center">
                                 <span id="saveChangesBtnText">Save Changes</span>
                                 <div id="saveChangesLoader" class="bouncing-dots hidden-until-loading">
                                     <div class="dot"></div>
@@ -387,10 +393,12 @@
         const addNoteBtnText = document.getElementById('addNoteBtnText');
         const addNoteLoader = document.getElementById('addNoteLoader');
 
+        const notesListLoader = document.getElementById('notesListLoader');
+        const viewerLoader = document.getElementById('viewerLoader');
+
         const noteTitleInput = document.getElementById('noteTitle');
         const noteContentInput = document.getElementById('noteContent');
         const notesList = document.getElementById('notesList');
-        const shimmerTemplate = document.getElementById('shimmerTemplate');
 
         const messageModal = document.getElementById('messageModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -458,61 +466,6 @@
                 };
             });
         }
-
-        /**
-         * Displays shimmer loading effects for the notes list.
-         * @param {boolean} show - True to show, false to hide.
-         * @param {number} count - Number of shimmer items to display.
-         */
-        function toggleNotesListShimmer(show, count = 3) {
-            notesList.innerHTML = ''; // Clear existing notes/shimmers
-            if (show) {
-                for (let i = 0; i < count; i++) {
-                    const shimmerClone = shimmerTemplate.cloneNode(true);
-                    shimmerClone.removeAttribute('id'); // Remove id from clones
-                    shimmerClone.classList.remove('hidden');
-                    notesList.appendChild(shimmerClone);
-                }
-            } else {
-                notesList.innerHTML = ''; // Clear shimmers
-            }
-        }
-
-        /**
-         * Displays shimmer loading effects for the single note viewer.
-         * @param {boolean} show - True to show, false to hide.
-         */
-        function toggleSingleNoteShimmer(show) {
-            if (show) {
-                // Clear existing content and show shimmer
-                viewerNoteTitle.innerHTML = '<div class="shimmer-text-block shimmer-text-block-lg animate-pulse"></div>';
-                viewerNoteContent.innerHTML = `
-                    <div class="shimmer-text-block shimmer-text-block-md animate-pulse"></div>
-                    <div class="shimmer-text-block shimmer-text-block-md w-11/12 animate-pulse"></div>
-                    <div class="shimmer-text-block shimmer-text-block-md w-10/12 animate-pulse"></div>
-                `;
-                viewerNoteTimestamp.innerHTML = '<div class="shimmer-text-block shimmer-text-block-sm animate-pulse"></div>';
-
-                // Apply shimmer directly to input fields when in editor mode
-                editNoteTitleViewer.classList.add('shimmer-bg', 'animate-pulse');
-                editNoteContentViewer.classList.add('shimmer-bg', 'animate-pulse');
-
-                // Ensure the containers themselves are visible
-                viewerNoteTitle.classList.remove('hidden');
-                viewerNoteContent.classList.remove('hidden');
-                viewerNoteTimestamp.classList.remove('hidden');
-
-            } else {
-                // Clear shimmer from viewer and editor fields
-                viewerNoteTitle.innerHTML = '';
-                viewerNoteContent.innerHTML = '';
-                viewerNoteTimestamp.innerHTML = '';
-
-                editNoteTitleViewer.classList.remove('shimmer-bg', 'animate-pulse');
-                editNoteContentViewer.classList.remove('shimmer-bg', 'animate-pulse');
-            }
-        }
-
 
         /**
          * Sets the loading state for a button with a bouncing dots loader.
@@ -673,7 +626,12 @@
         });
 
         googleSignInBtn.addEventListener('click', async () => {
-            setButtonLoading(googleSignInBtn, googleSignInBtn, googleSignInBtn, true); // Quick fix to use the same function, needs adjustment for Google button
+            // No bouncing dots for Google button since it navigates away
+            const originalText = googleSignInBtn.innerHTML;
+            googleSignInBtn.disabled = true;
+            googleSignInBtn.innerHTML = '<span class="bouncing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></span>';
+            googleSignInBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
             const provider = new GoogleAuthProvider();
             try {
                 await withExponentialBackoff(signInWithPopup, [auth, provider]);
@@ -682,7 +640,9 @@
                     showMessageModal('Google Sign In Failed', error.message);
                 }
             } finally {
-                setButtonLoading(googleSignInBtn, googleSignInBtn, googleSignInBtn, false);
+                googleSignInBtn.disabled = false;
+                googleSignInBtn.innerHTML = originalText;
+                googleSignInBtn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         });
 
@@ -867,13 +827,17 @@
             }
 
             setViewerMode(true); // Default to viewer mode
-            toggleSingleNoteShimmer(true); // Show shimmer for single note content
+
+            // Show the loading dots and hide the content
+            viewerLoader.classList.remove('hidden-until-loading');
+            viewerMode.classList.add('hidden-until-loading');
+            editorMode.classList.add('hidden-until-loading');
 
             try {
                 const noteDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/notes`, noteId);
                 const noteSnap = await withExponentialBackoff(getDoc, [noteDocRef]);
 
-                toggleSingleNoteShimmer(false); // Hide shimmer once data is fetched
+                viewerLoader.classList.add('hidden-until-loading');
 
                 if (noteSnap.exists()) {
                     const noteData = noteSnap.data();
@@ -886,12 +850,14 @@
                     editNoteTitleViewer.value = noteData.title;
                     editNoteContentViewer.value = noteData.content;
 
+                    viewerMode.classList.remove('hidden-until-loading');
+
                 } else {
                     showMessageModal('Error', 'Note not found.');
                     navigate('/'); // Go back to home if note doesn't exist
                 }
             } catch (error) {
-                toggleSingleNoteShimmer(false); // Hide shimmer on error
+                viewerLoader.classList.add('hidden-until-loading');
                 showMessageModal('Error', 'Failed to load note: ' + error.message);
                 navigate('/'); // Go back to home on error
             }
@@ -994,7 +960,9 @@
                 return;
             }
 
-            toggleNotesListShimmer(true); // Show shimmer while loading notes
+            // Show the loading dots and hide the content area
+            notesListLoader.classList.remove('hidden-until-loading');
+            notesList.classList.add('hidden-until-loading');
 
             // If there's an existing listener, unsubscribe it first
             if (unsubscribeNotes) {
@@ -1002,10 +970,12 @@
             }
 
             const notesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/notes`);
-            const q = query(notesCollectionRef); // orderBy commented out to avoid index issues
+            const q = query(notesCollectionRef);
 
             unsubscribeNotes = onSnapshot(q, (snapshot) => {
-                toggleNotesListShimmer(false); // Hide shimmer once data is received
+                notesListLoader.classList.add('hidden-until-loading'); // Hide loader once data arrives
+                notesList.classList.remove('hidden-until-loading'); // Show notes list
+
                 allNotes = []; // Clear and rebuild the notes array
                 snapshot.forEach(doc => {
                     allNotes.push({ id: doc.id, ...doc.data() });
@@ -1020,14 +990,14 @@
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
-                toggleNotesListShimmer(false); // Hide shimmer on error
+                notesListLoader.classList.add('hidden-until-loading'); // Hide loader on error
+                notesList.classList.remove('hidden-until-loading'); // Show empty list
             });
         }
 
 
         // Initial page render on window load
         window.onload = () => {
-            shimmerTemplate.classList.add('hidden'); // Hide the template after initial load
             // onAuthStateChanged will trigger renderPage after auth state is determined
         };
 
