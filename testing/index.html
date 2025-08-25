@@ -177,7 +177,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium shimmer-bg rounded-md h-5 w-24"></span>
+                    <span id="userIdDisplay" class="text-sm text-gray-600 font-medium shimmer-bg rounded-md h-5 w-24 animate-pulse"></span>
                     <button type="button" id="signOutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">Sign Out</button>
                 </div>
             </header>
@@ -891,10 +891,12 @@
 
             if (user) {
                 userIdDisplay.textContent = `User ID: ${user.uid}`;
+                userIdDisplay.classList.remove('animate-pulse'); // FIX: Stop shimmering on auth success
                 renderPage(); // Render appropriate page after auth state is known
             } else {
                 // User logged out
                 currentUserId = null;
+                userIdDisplay.classList.add('animate-pulse'); // Add back shimmer when logging out
                 if (unsubscribeNotes) {
                     unsubscribeNotes(); // Unsubscribe from notes listener
                     unsubscribeNotes = null;
