@@ -435,19 +435,20 @@
                     unsubscribeNotes();
                     unsubscribeNotes = null;
                 }
-                return;
-            }
-
-            // Authenticated
-            if (noteId) {
-                // Show single note viewer
-                singleNoteViewerSection.classList.remove('hidden');
-                await loadSingleNote(noteId);
             } else {
-                // Show main notes list
-                notesSection.classList.remove('hidden');
-                loadNotesList();
+                // Authenticated
+                if (noteId) {
+                    // Show single note viewer
+                    singleNoteViewerSection.classList.remove('hidden');
+                    await loadSingleNote(noteId);
+                } else {
+                    // Show main notes list
+                    notesSection.classList.remove('hidden');
+                    loadNotesList();
+                }
             }
+            // Hide the global spinner once the page is rendered (either auth or notes)
+            showLoadingSpinner(false);
         }
 
         // Listen for browser history changes (back/forward buttons)
@@ -859,7 +860,7 @@
 
             if (user) {
                 userIdDisplay.textContent = `User ID: ${user.uid}`;
-                renderPage(); // Render appropriate page after auth state is known
+                await renderPage(); // Use await to ensure renderPage completes before hiding spinner
             } else {
                 // User logged out
                 currentUserId = null;
@@ -868,8 +869,10 @@
                     unsubscribeNotes = null;
                 }
                 navigate('/'); // Go to home (which will show auth section)
-                renderPage(); // Render auth section
+                await renderPage(); // Use await to ensure renderPage completes before hiding spinner
             }
+            // Hide the global spinner only after the initial auth state is processed and page rendered
+            showLoadingSpinner(false);
         });
 
         /**
@@ -881,7 +884,7 @@
                 return;
             }
 
-            showLoadingSpinner(true); // Show global spinner while loading notes
+            // showLoadingSpinner(true); // This is now handled by onAuthStateChanged/renderPage for initial load
 
             // If there's an existing listener, unsubscribe it first
             if (unsubscribeNotes) {
@@ -903,20 +906,19 @@
                     return timeB - timeA;
                 });
                 renderNotes(allNotes);
-                showLoadingSpinner(false); // Hide global spinner once data is received
+                // showLoadingSpinner(false); // This is now handled by onAuthStateChanged/renderPage for initial load
             }, (error) => {
                 console.error("Error fetching notes: ", error);
                 showMessageModal('Error', 'Failed to load notes: ' + error.message);
-                showLoadingSpinner(false); // Hide global spinner on error
+                // showLoadingSpinner(false); // This is now handled by onAuthStateChanged/renderPage for initial load
             });
         }
 
 
         // Initial page render on window load
         window.onload = () => {
-            // onAuthStateChanged will trigger renderPage after auth state is determined
-            // The spinner will be hidden once the data is loaded by renderPage or loadNotesList/loadSingleNote
-            // No need to explicitly hide it here as showLoadingSpinner(false) will be called after data fetch.
+            showLoadingSpinner(true); // Show spinner as soon as the window starts loading
+            // onAuthStateChanged will trigger renderPage and hide the spinner once ready.
         };
 
     </script>
